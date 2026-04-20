@@ -72,9 +72,6 @@
               <th class="px-4 py-3 text-left">Role</th>
               <th class="px-4 py-3 text-left">Status</th>
               <th class="px-4 py-3 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="users-tbody">
             <tr><td colspan="7" class="text-center py-8 text-gray-400">Loading…</td></tr>
           </tbody>
         </table>
@@ -110,8 +107,13 @@
   <script>
     let allApps = [], allUsers = [], studMap = {};
     let editAppId = null, editEditor = null;
+    let isSuperAdmin = false;
 
     async function init() {
+      // Check if current user is superadmin
+      const me = await fetch('/api/me').then(r => r.json());
+      isSuperAdmin = (me.pyccode === 'lkh1');
+
       // Fetch student list to enrich user display
       try {
         const studs = await fetch('https://www5.pyc.edu.hk/pycnet/api/stud_list.php').then(r => r.json());
@@ -216,11 +218,16 @@
               ? '<span class="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">Banned</span>'
               : '<span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">Active</span>'}
           </td>
-          <td class="px-4 py-3">
+          <td class="px-4 py-3 flex gap-2 flex-wrap">
             <button onclick="toggleBan('${u.id}', ${u.is_banned})"
               class="text-xs ${u.is_banned ? 'bg-green-50 text-green-700 hover:bg-green-100' : 'bg-red-50 text-red-600 hover:bg-red-100'} px-3 py-1 rounded-lg">
               ${u.is_banned ? 'Unban' : 'Ban'}
             </button>
+            ${isSuperAdmin && u.pyccode !== 'lkh1' ? `
+            <button onclick="toggleRole('${u.id}', '${u.role}')"
+              class="text-xs ${u.role === 'teacher' ? 'bg-orange-50 text-orange-700 hover:bg-orange-100' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'} px-3 py-1 rounded-lg">
+              ${u.role === 'teacher' ? 'Demote' : 'Promote'}
+            </button>` : ''}
           </td>
         </tr>`;
       }).join('');
@@ -235,8 +242,20 @@
       if (res.ok) { const a = allApps.find(a => a.id === id); if (a) a.is_hidden = !currentlyHidden; renderApps(allApps); }
     }
 
-    async function toggleBan(id, currentlyBanned) {
-      if (!confirm(`${currentlyBanned ? 'Unban' : 'Ban'} this user?`)) return;
+    async function toggleRole(id, currentRole) {
+      const newRole = currentRole === 'teacher' ? 'student' : 'teacher';
+      const action  = newRole === 'teacher' ? 'promote to teacher' : 'demote to student';
+      if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+      const res = await fetch(`/admin/api/users/${id}/role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+      });
+      if (res.ok) { const u = allUsers.find(u => u.id === id); if (u) u.role = newRole; renderUsers(allUsers); }
+      else { const d = await res.json(); alert(d.error || 'Failed to update role.'); }
+    }
+
+    async function toggleBan(id, currentlyBanned) {      if (!confirm(`${currentlyBanned ? 'Unban' : 'Ban'} this user?`)) return;
       const res = await fetch(`/admin/api/users/${id}/ban`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

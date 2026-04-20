@@ -105,6 +105,7 @@ func main() {
 	{
 		admin.GET("/users", handlers.AdminListUsers(db))
 		admin.PUT("/users/:id/ban", handlers.AdminBanUser(db))
+		admin.PUT("/users/:id/role", handlers.AdminSetRole(db))
 		admin.GET("/apps", handlers.AdminListApps(db))
 		admin.PUT("/apps/:id/hide", handlers.AdminHideApp(db))
 		admin.PUT("/apps/:id/content", handlers.UpdateApp(db))

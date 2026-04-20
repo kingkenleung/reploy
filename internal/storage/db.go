@@ -30,13 +30,23 @@ func (db *DB) Close() {
 // --- User queries ---
 
 func (db *DB) UpsertUser(ctx context.Context, u *models.User) (*models.User, error) {
+	// lkh1 is always a teacher regardless of what is in the DB
+	if u.Email == "lkh1@school.pyc.edu.hk" {
+		u.Role = models.RoleTeacher
+	}
+
 	row := db.pool.QueryRow(ctx, `
-		INSERT INTO users (google_id, email, pyccode, name, avatar_url)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO users (google_id, email, pyccode, name, avatar_url, role)
+		VALUES ($1, $2, $3, $4, $5, COALESCE(NULLIF($6, ''), 'student'))
 		ON CONFLICT (google_id) DO UPDATE
-		  SET name = EXCLUDED.name, avatar_url = EXCLUDED.avatar_url
+		  SET name       = EXCLUDED.name,
+		      avatar_url = EXCLUDED.avatar_url,
+		      role       = CASE
+		                     WHEN users.email = 'lkh1@school.pyc.edu.hk' THEN 'teacher'
+		                     ELSE users.role
+		                   END
 		RETURNING id, google_id, email, pyccode, name, avatar_url, role, is_banned, created_at
-	`, u.GoogleID, u.Email, u.PYCCode, u.Name, u.AvatarURL)
+	`, u.GoogleID, u.Email, u.PYCCode, u.Name, u.AvatarURL, string(u.Role))
 
 	var out models.User
 	err := row.Scan(&out.ID, &out.GoogleID, &out.Email, &out.PYCCode, &out.Name,
@@ -85,6 +95,11 @@ func (db *DB) ListUsers(ctx context.Context) ([]*models.User, error) {
 
 func (db *DB) SetUserBanned(ctx context.Context, id string, banned bool) error {
 	_, err := db.pool.Exec(ctx, `UPDATE users SET is_banned = $1 WHERE id = $2`, banned, id)
+	return err
+}
+
+func (db *DB) SetUserRole(ctx context.Context, id string, role models.Role) error {
+	_, err := db.pool.Exec(ctx, `UPDATE users SET role = $1 WHERE id = $2`, string(role), id)
 	return err
 }
 
