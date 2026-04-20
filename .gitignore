@@ -1,0 +1,23 @@
+# Go binaries
+reploy
+reploy-*
+
+# Environment variables — never commit real secrets
+.env
+
+# Go build cache
+*.test
+*.out
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Claude Code
+.claude/

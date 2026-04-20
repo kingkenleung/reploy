@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reploy — Editor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/theme/dracula.min.css" />
+  <style>
+    .CodeMirror { height: 100%; font-size: 14px; }
+    #editor-wrap { height: calc(100vh - 56px); }
+  </style>
+</head>
+<body class="bg-gray-900 text-white flex flex-col h-screen overflow-hidden">
+
+  <!-- Toolbar -->
+  <div class="h-14 bg-gray-800 border-b border-gray-700 flex items-center px-4 gap-3 shrink-0">
+    <a href="/dashboard" class="text-indigo-400 hover:text-indigo-300 text-sm">← Back</a>
+    <span class="text-gray-500">|</span>
+    <input id="app-title" type="text" maxlength="80"
+      class="bg-transparent text-white text-sm font-medium focus:outline-none w-48 border-b border-transparent focus:border-indigo-400 transition" />
+    <span class="text-gray-600 text-xs" id="save-status">Saved</span>
+    <div class="ml-auto flex items-center gap-2">
+      <span id="public-url" class="text-xs text-gray-400 hidden sm:block truncate max-w-[220px]"></span>
+      <button onclick="copyLink()" class="text-xs text-gray-400 hover:text-white transition">Copy link</button>
+      <a id="preview-btn" href="#" target="_blank"
+        class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-1.5 rounded-lg transition">Preview</a>
+      <button onclick="saveNow()"
+        class="bg-green-600 hover:bg-green-500 text-white text-sm px-4 py-1.5 rounded-lg transition">Save</button>
+    </div>
+  </div>
+
+  <!-- CodeMirror -->
+  <div id="editor-wrap" class="flex-1 overflow-hidden">
+    <textarea id="code-editor"></textarea>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/edit/closetag.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/edit/matchbrackets.min.js"></script>
+
+  <script>
+    const APP_ID  = '{{.app_id}}';
+    const PYCCODE = '{{.pyccode}}';
+    let app = null, saveTimer = null;
+
+    const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+      mode: 'htmlmixed',
+      theme: 'dracula',
+      lineNumbers: true,
+      autoCloseTags: true,
+      matchBrackets: true,
+      lineWrapping: false,
+      tabSize: 2,
+      indentWithTabs: false,
+    });
+
+    editor.on('change', () => {
+      setStatus('Unsaved…');
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveNow, 2000);
+    });
+
+    async function init() {
+      const res = await fetch(`/api/apps/${APP_ID}`);
+      if (!res.ok) { alert('Could not load app.'); return; }
+      app = await res.json();
+      document.getElementById('app-title').value = app.title;
+      editor.setValue(app.html_content);
+      editor.clearHistory();
+      setStatus('Saved');
+      updatePreviewLink();
+    }
+
+    function updatePreviewLink() {
+      if (!app) return;
+      const url = `${location.origin}/${PYCCODE}/${app.slug}`;
+      document.getElementById('public-url').textContent = url;
+      document.getElementById('preview-btn').href = url;
+    }
+
+    async function saveNow() {
+      if (!app) return;
+      const title = document.getElementById('app-title').value.trim() || app.title;
+      const html  = editor.getValue();
+      if (html.length > 500 * 1024) { setStatus('⚠ File exceeds 500 KB limit'); return; }
+      setStatus('Saving…');
+      const res = await fetch(`/api/apps/${APP_ID}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description: app.description || '', html_content: html })
+      });
+      if (res.ok) { app.title = title; setStatus('Saved ✓'); }
+      else { const d = await res.json(); setStatus('Save failed: ' + (d.error || 'unknown error')); }
+    }
+
+    function setStatus(msg) { document.getElementById('save-status').textContent = msg; }
+
+    function copyLink() {
+      if (!app) return;
+      navigator.clipboard.writeText(`${location.origin}/${PYCCODE}/${app.slug}`)
+        .then(() => setStatus('Link copied!'));
+    }
+
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveNow(); }
+    });
+
+    init();
+  </script>
+</body>
+</html>
