@@ -88,6 +88,17 @@ func AdminSetRole(db *storage.DB) gin.HandlerFunc {
 	}
 }
 
+func AdminGetApp(db *storage.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		app, err := db.GetAppByID(c.Request.Context(), c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "App not found"})
+			return
+		}
+		c.JSON(http.StatusOK, app)
+	}
+}
+
 func AdminListApps(db *storage.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		apps, err := db.ListAllApps(c.Request.Context())
@@ -99,6 +110,27 @@ func AdminListApps(db *storage.DB) gin.HandlerFunc {
 			apps = []*models.App{}
 		}
 		c.JSON(http.StatusOK, apps)
+	}
+}
+
+func AdminSetApproved(db *storage.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			Approved bool `json:"approved"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+			return
+		}
+		if err := db.SetAppApproved(c.Request.Context(), c.Param("id"), req.Approved); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Operation failed"})
+			return
+		}
+		msg := "App approved"
+		if !req.Approved {
+			msg = "App unapproved"
+		}
+		c.JSON(http.StatusOK, gin.H{"message": msg})
 	}
 }
 

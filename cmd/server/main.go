@@ -7,6 +7,7 @@ import (
 	"reploy/internal/auth"
 	"reploy/internal/handlers"
 	"reploy/internal/middleware"
+	"reploy/internal/models"
 	"reploy/internal/storage"
 	"reploy/internal/studlist"
 
@@ -72,6 +73,9 @@ func main() {
 				"pyccode": c.GetString("pyccode"),
 			})
 		})
+		authed.GET("/shelf", func(c *gin.Context) {
+			c.HTML(200, "shelf.html", nil)
+		})
 		authed.GET("/admin", middleware.TeacherRequired(), func(c *gin.Context) {
 			c.HTML(200, "admin.html", nil)
 		})
@@ -86,6 +90,17 @@ func main() {
 		api.GET("/apps/:id", handlers.GetApp(db))
 		api.PUT("/apps/:id", handlers.UpdateApp(db))
 		api.DELETE("/apps/:id", handlers.DeleteApp(db))
+		api.GET("/shelf", func(c *gin.Context) {
+			apps, err := db.ListApprovedApps(c.Request.Context())
+			if err != nil {
+				c.JSON(500, gin.H{"error": "Could not fetch shelf"})
+				return
+			}
+			if apps == nil {
+				apps = []*models.App{}
+			}
+			c.JSON(200, apps)
+		})
 
 		// Current user info
 		api.GET("/me", func(c *gin.Context) {
@@ -107,7 +122,9 @@ func main() {
 		admin.PUT("/users/:id/ban", handlers.AdminBanUser(db))
 		admin.PUT("/users/:id/role", handlers.AdminSetRole(db))
 		admin.GET("/apps", handlers.AdminListApps(db))
+		admin.GET("/apps/:id", handlers.AdminGetApp(db))
 		admin.PUT("/apps/:id/hide", handlers.AdminHideApp(db))
+		admin.PUT("/apps/:id/approve", handlers.AdminSetApproved(db))
 		admin.PUT("/apps/:id/content", handlers.UpdateApp(db))
 	}
 

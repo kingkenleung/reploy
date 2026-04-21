@@ -106,15 +106,19 @@ func (db *DB) SetUserRole(ctx context.Context, id string, role models.Role) erro
 // --- App queries ---
 
 func (db *DB) CreateApp(ctx context.Context, a *models.App) (*models.App, error) {
+	cat := a.Category
+	if cat == nil {
+		cat = []byte("[]")
+	}
 	row := db.pool.QueryRow(ctx, `
-		INSERT INTO apps (user_id, slug, title, description, html_content)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, user_id, slug, title, description, html_content, is_hidden, is_public, created_at, updated_at
-	`, a.UserID, a.Slug, a.Title, a.Description, a.HTMLContent)
+		INSERT INTO apps (user_id, slug, title, description, html_content, category)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, user_id, slug, title, description, html_content, category, is_hidden, is_public, approved, created_at, updated_at
+	`, a.UserID, a.Slug, a.Title, a.Description, a.HTMLContent, cat)
 
 	var out models.App
 	err := row.Scan(&out.ID, &out.UserID, &out.Slug, &out.Title, &out.Description,
-		&out.HTMLContent, &out.IsHidden, &out.IsPublic, &out.CreatedAt, &out.UpdatedAt)
+		&out.HTMLContent, &out.Category, &out.IsHidden, &out.IsPublic, &out.Approved, &out.CreatedAt, &out.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -123,14 +127,14 @@ func (db *DB) CreateApp(ctx context.Context, a *models.App) (*models.App, error)
 
 func (db *DB) GetAppByID(ctx context.Context, id string) (*models.App, error) {
 	row := db.pool.QueryRow(ctx, `
-		SELECT a.id, a.user_id, a.slug, a.title, a.description, a.html_content,
-		       a.is_hidden, a.is_public, a.created_at, a.updated_at, u.pyccode
+		SELECT a.id, a.user_id, a.slug, a.title, a.description, a.html_content, a.category,
+		       a.is_hidden, a.is_public, a.approved, a.created_at, a.updated_at, u.pyccode
 		FROM apps a JOIN users u ON u.id = a.user_id
 		WHERE a.id = $1
 	`, id)
 	var a models.App
 	err := row.Scan(&a.ID, &a.UserID, &a.Slug, &a.Title, &a.Description,
-		&a.HTMLContent, &a.IsHidden, &a.IsPublic, &a.CreatedAt, &a.UpdatedAt, &a.OwnerPYCCode)
+		&a.HTMLContent, &a.Category, &a.IsHidden, &a.IsPublic, &a.Approved, &a.CreatedAt, &a.UpdatedAt, &a.OwnerPYCCode)
 	if err != nil {
 		return nil, err
 	}
@@ -139,14 +143,14 @@ func (db *DB) GetAppByID(ctx context.Context, id string) (*models.App, error) {
 
 func (db *DB) GetAppByPYCCodeAndSlug(ctx context.Context, pyccode, slug string) (*models.App, error) {
 	row := db.pool.QueryRow(ctx, `
-		SELECT a.id, a.user_id, a.slug, a.title, a.description, a.html_content,
-		       a.is_hidden, a.is_public, a.created_at, a.updated_at, u.pyccode
+		SELECT a.id, a.user_id, a.slug, a.title, a.description, a.html_content, a.category,
+		       a.is_hidden, a.is_public, a.approved, a.created_at, a.updated_at, u.pyccode
 		FROM apps a JOIN users u ON u.id = a.user_id
 		WHERE u.pyccode = $1 AND a.slug = $2
 	`, pyccode, slug)
 	var a models.App
 	err := row.Scan(&a.ID, &a.UserID, &a.Slug, &a.Title, &a.Description,
-		&a.HTMLContent, &a.IsHidden, &a.IsPublic, &a.CreatedAt, &a.UpdatedAt, &a.OwnerPYCCode)
+		&a.HTMLContent, &a.Category, &a.IsHidden, &a.IsPublic, &a.Approved, &a.CreatedAt, &a.UpdatedAt, &a.OwnerPYCCode)
 	if err != nil {
 		return nil, err
 	}
@@ -155,8 +159,8 @@ func (db *DB) GetAppByPYCCodeAndSlug(ctx context.Context, pyccode, slug string) 
 
 func (db *DB) ListAppsByUser(ctx context.Context, userID string) ([]*models.App, error) {
 	rows, err := db.pool.Query(ctx, `
-		SELECT a.id, a.user_id, a.slug, a.title, a.description, a.html_content,
-		       a.is_hidden, a.is_public, a.created_at, a.updated_at, u.pyccode
+		SELECT a.id, a.user_id, a.slug, a.title, a.description, a.html_content, a.category,
+		       a.is_hidden, a.is_public, a.approved, a.created_at, a.updated_at, u.pyccode
 		FROM apps a JOIN users u ON u.id = a.user_id
 		WHERE a.user_id = $1 ORDER BY a.updated_at DESC
 	`, userID)
@@ -169,8 +173,8 @@ func (db *DB) ListAppsByUser(ctx context.Context, userID string) ([]*models.App,
 
 func (db *DB) ListAllApps(ctx context.Context) ([]*models.App, error) {
 	rows, err := db.pool.Query(ctx, `
-		SELECT a.id, a.user_id, a.slug, a.title, a.description, a.html_content,
-		       a.is_hidden, a.is_public, a.created_at, a.updated_at, u.pyccode
+		SELECT a.id, a.user_id, a.slug, a.title, a.description, a.html_content, a.category,
+		       a.is_hidden, a.is_public, a.approved, a.created_at, a.updated_at, u.pyccode
 		FROM apps a JOIN users u ON u.id = a.user_id
 		ORDER BY a.updated_at DESC
 	`)
@@ -181,16 +185,39 @@ func (db *DB) ListAllApps(ctx context.Context) ([]*models.App, error) {
 	return scanApps(rows)
 }
 
-func (db *DB) UpdateAppContent(ctx context.Context, id, title, description, htmlContent string) error {
+func (db *DB) ListApprovedApps(ctx context.Context) ([]*models.App, error) {
+	rows, err := db.pool.Query(ctx, `
+		SELECT a.id, a.user_id, a.slug, a.title, a.description, a.html_content, a.category,
+		       a.is_hidden, a.is_public, a.approved, a.created_at, a.updated_at, u.pyccode
+		FROM apps a JOIN users u ON u.id = a.user_id
+		WHERE a.approved = true AND a.is_hidden = false AND u.is_banned = false
+		ORDER BY a.updated_at DESC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanApps(rows)
+}
+
+func (db *DB) UpdateAppContent(ctx context.Context, id, title, description, htmlContent string, category []byte) error {
+	if category == nil {
+		category = []byte("[]")
+	}
 	_, err := db.pool.Exec(ctx, `
-		UPDATE apps SET title=$1, description=$2, html_content=$3, updated_at=NOW()
-		WHERE id=$4
-	`, title, description, htmlContent, id)
+		UPDATE apps SET title=$1, description=$2, html_content=$3, category=$4, updated_at=NOW()
+		WHERE id=$5
+	`, title, description, htmlContent, category, id)
 	return err
 }
 
 func (db *DB) SetAppHidden(ctx context.Context, id string, hidden bool) error {
 	_, err := db.pool.Exec(ctx, `UPDATE apps SET is_hidden=$1 WHERE id=$2`, hidden, id)
+	return err
+}
+
+func (db *DB) SetAppApproved(ctx context.Context, id string, approved bool) error {
+	_, err := db.pool.Exec(ctx, `UPDATE apps SET approved=$1 WHERE id=$2`, approved, id)
 	return err
 }
 
@@ -207,7 +234,7 @@ func scanApps(rows interface {
 	for rows.Next() {
 		var a models.App
 		if err := rows.Scan(&a.ID, &a.UserID, &a.Slug, &a.Title, &a.Description,
-			&a.HTMLContent, &a.IsHidden, &a.IsPublic, &a.CreatedAt, &a.UpdatedAt, &a.OwnerPYCCode); err != nil {
+			&a.HTMLContent, &a.Category, &a.IsHidden, &a.IsPublic, &a.Approved, &a.CreatedAt, &a.UpdatedAt, &a.OwnerPYCCode); err != nil {
 			return nil, err
 		}
 		apps = append(apps, &a)

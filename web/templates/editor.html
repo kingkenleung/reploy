@@ -15,25 +15,116 @@
 <body class="bg-gray-900 text-white flex flex-col h-screen overflow-hidden">
 
   <!-- Toolbar -->
-  <div class="h-14 bg-gray-800 border-b border-gray-700 flex items-center px-4 gap-3 shrink-0">
-    <a href="/dashboard" class="text-indigo-400 hover:text-indigo-300 text-sm">← Back</a>
-    <span class="text-gray-500">|</span>
+  <div class="h-14 bg-gray-800 border-b border-gray-700 flex items-center px-4 gap-2 shrink-0">
+    <!-- Back arrow (always visible) -->
+    <a href="/dashboard" class="text-indigo-400 hover:text-indigo-300 text-sm shrink-0">←</a>
+
+    <!-- Desktop: separator + title + status -->
+    <span class="text-gray-500 shrink-0 hidden sm:inline">|</span>
     <input id="app-title" type="text" maxlength="80"
-      class="bg-transparent text-white text-sm font-medium focus:outline-none w-48 border-b border-transparent focus:border-indigo-400 transition" />
-    <span class="text-gray-600 text-xs" id="save-status">Saved</span>
-    <div class="ml-auto flex items-center gap-2">
-      <span id="public-url" class="text-xs text-gray-400 hidden sm:block truncate max-w-[220px]"></span>
-      <button onclick="copyLink()" class="text-xs text-gray-400 hover:text-white transition">Copy link</button>
-      <a id="preview-btn" href="#" target="_blank"
-        class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-1.5 rounded-lg transition">Preview</a>
-      <button onclick="saveNow()"
-        class="bg-green-600 hover:bg-green-500 text-white text-sm px-4 py-1.5 rounded-lg transition">Save</button>
+      class="hidden sm:block bg-transparent text-white text-sm font-medium focus:outline-none w-36 border-b border-transparent focus:border-indigo-400 transition shrink-0" />
+    <span class="text-gray-600 text-xs shrink-0 hidden sm:inline" id="save-status-desktop">Saved</span>
+
+    <!-- Gear icon (always visible) -->
+    <button onclick="openInfoModal()" title="App settings"
+      class="text-gray-400 hover:text-white transition shrink-0 p-1.5 rounded hover:bg-gray-700">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+
+    <!-- Copy All icon (always visible) -->
+    <button id="btn-copy-all" onclick="copyAll()" title="Copy all"
+      class="text-gray-400 hover:text-white transition shrink-0 p-1.5 rounded hover:bg-gray-700">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+    </button>
+
+    <!-- Select All icon (always visible) -->
+    <button onclick="selectAll()" title="Select all"
+      class="text-gray-400 hover:text-white transition shrink-0 p-1.5 rounded hover:bg-gray-700">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/>
+      </svg>
+    </button>
+
+    <!-- Paste icon (always visible) -->
+    <button id="btn-paste" onclick="pasteIntoEditor()" title="Paste"
+      class="text-gray-400 hover:text-white transition shrink-0 p-1.5 rounded hover:bg-gray-700">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+      </svg>
+    </button>
+
+    <!-- Save status (mobile only, inline) -->
+    <span class="text-gray-600 text-xs shrink-0 sm:hidden" id="save-status">Saved</span>
+
+    <div class="ml-auto flex items-center gap-1 shrink-0">
+      <!-- Desktop: URL + Copy link text -->
+      <span id="public-url" class="text-xs text-gray-400 hidden sm:block truncate max-w-[180px]"></span>
+      <button onclick="copyLink()" class="text-xs text-gray-400 hover:text-white transition hidden sm:block">Copy link</button>
+
+      <!-- Preview: eye icon on mobile, text on desktop -->
+      <a id="preview-btn" href="#" target="_blank" title="Preview"
+        class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition px-3 py-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <span class="hidden sm:inline text-sm">Preview</span>
+      </a>
+
+      <!-- Save: floppy disk icon on mobile, text on desktop -->
+      <button onclick="saveNow()" title="Save"
+        class="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white rounded-lg transition px-3 py-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        <span class="hidden sm:inline text-sm">Save</span>
+      </button>
     </div>
   </div>
 
   <!-- CodeMirror -->
   <div id="editor-wrap" class="flex-1 overflow-hidden">
     <textarea id="code-editor"></textarea>
+  </div>
+
+  <!-- App Info Modal -->
+  <div id="info-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+    <div class="bg-white text-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-bold">App Info</h2>
+        <button onclick="closeInfoModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+      </div>
+      <label class="block text-xs text-gray-500 mb-1">Title</label>
+      <input id="info-title" type="text" maxlength="80"
+        class="w-full border rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      <label class="block text-xs text-gray-500 mb-1">Description</label>
+      <textarea id="info-description" rows="3" maxlength="300"
+        class="w-full border rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+        placeholder="Briefly describe what your app does…"></textarea>
+      <label class="block text-xs text-gray-500 mb-2">Categories</label>
+      <div id="info-categories" class="flex flex-wrap gap-2 mb-4">
+        <!-- rendered by JS -->
+      </div>
+      <div class="flex justify-end gap-3">
+        <button onclick="closeInfoModal()" class="text-sm text-gray-500 hover:underline">Cancel</button>
+        <button onclick="saveInfo()"
+          class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">Save</button>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.js"></script>
@@ -47,6 +138,8 @@
   <script>
     const APP_ID  = '{{.app_id}}';
     const PYCCODE = '{{.pyccode}}';
+    const CATEGORIES = ['Productivity', 'Game', 'Relaxation', 'Self-learning', 'Communication', 'Misc'];
+
     let app = null, saveTimer = null;
 
     const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
@@ -66,6 +159,83 @@
       saveTimer = setTimeout(saveNow, 2000);
     });
 
+    // --- Info modal ---
+    function openInfoModal() {
+      if (!app) return;
+      document.getElementById('info-title').value = app.title || '';
+      document.getElementById('info-description').value = app.description || '';
+      renderCategoryCheckboxes('info-categories', app.category || []);
+      document.getElementById('info-modal').classList.remove('hidden');
+    }
+
+    function closeInfoModal() {
+      document.getElementById('info-modal').classList.add('hidden');
+    }
+
+    async function saveInfo() {
+      const title       = document.getElementById('info-title').value.trim();
+      const description = document.getElementById('info-description').value.trim();
+      const category    = getChecked('info-categories');
+      if (!title) return;
+      const html = editor.getValue();
+      if (html.length > 500 * 1024) { setStatus('⚠ File exceeds 500 KB limit'); closeInfoModal(); return; }
+      setStatus('Saving…');
+      const res = await fetch(`/api/apps/${APP_ID}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, html_content: html, category }),
+      });
+      if (res.ok) {
+        app.title = title;
+        app.description = description;
+        app.category = category;
+        document.getElementById('app-title').value = title;
+        setStatus('Saved ✓');
+        closeInfoModal();
+      } else {
+        const d = await res.json();
+        setStatus('Save failed: ' + (d.error || 'unknown error'));
+        closeInfoModal();
+      }
+    }
+
+    // --- Category helpers ---
+    function renderCategoryCheckboxes(containerId, selected) {
+      const sel = Array.isArray(selected) ? selected : [];
+      document.getElementById(containerId).innerHTML = CATEGORIES.map(c => `
+        <label class="flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer border rounded-full px-3 py-1 hover:bg-indigo-50 has-[:checked]:bg-indigo-100 has-[:checked]:border-indigo-400">
+          <input type="checkbox" value="${c}" ${sel.includes(c) ? 'checked' : ''} class="sr-only" />
+          ${c}
+        </label>
+      `).join('');
+    }
+
+    function getChecked(containerId) {
+      return Array.from(document.querySelectorAll(`#${containerId} input:checked`)).map(el => el.value);
+    }
+
+    // --- Init ---
+    async function copyAll() {
+      await navigator.clipboard.writeText(editor.getValue());
+      setStatus('Copied!');
+    }
+
+    function selectAll() {
+      editor.execCommand('selectAll');
+      editor.focus();
+    }
+
+    async function pasteIntoEditor() {
+      try {
+        const text = await navigator.clipboard.readText();
+        editor.setValue(text);
+        setStatus('Pasted!');
+      } catch(e) {
+        setStatus('Paste failed — check clipboard permission');
+      }
+    }
+
+    // --- Init ---
     async function init() {
       const res = await fetch(`/api/apps/${APP_ID}`);
       if (!res.ok) { alert('Could not load app.'); return; }
@@ -86,20 +256,26 @@
 
     async function saveNow() {
       if (!app) return;
-      const title = document.getElementById('app-title').value.trim() || app.title;
-      const html  = editor.getValue();
+      const title    = document.getElementById('app-title').value.trim() || app.title;
+      const html     = editor.getValue();
+      const category = app.category || [];
       if (html.length > 500 * 1024) { setStatus('⚠ File exceeds 500 KB limit'); return; }
       setStatus('Saving…');
       const res = await fetch(`/api/apps/${APP_ID}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description: app.description || '', html_content: html })
+        body: JSON.stringify({ title, description: app.description || '', html_content: html, category }),
       });
       if (res.ok) { app.title = title; setStatus('Saved ✓'); }
       else { const d = await res.json(); setStatus('Save failed: ' + (d.error || 'unknown error')); }
     }
 
-    function setStatus(msg) { document.getElementById('save-status').textContent = msg; }
+    function setStatus(msg) {
+      ['save-status', 'save-status-desktop'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = msg;
+      });
+    }
 
     function copyLink() {
       if (!app) return;

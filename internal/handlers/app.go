@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"regexp"
 	"strings"
@@ -16,16 +17,18 @@ var slugRegex = regexp.MustCompile(`^[a-z0-9-]+$`)
 const maxHTMLSize = 500 * 1024 // 500KB
 
 type createAppRequest struct {
-	Slug        string `json:"slug" binding:"required"`
-	Title       string `json:"title" binding:"required"`
-	Description string `json:"description"`
-	HTMLContent string `json:"html_content" binding:"required"`
+	Slug        string          `json:"slug" binding:"required"`
+	Title       string          `json:"title" binding:"required"`
+	Description string          `json:"description"`
+	HTMLContent string          `json:"html_content" binding:"required"`
+	Category    json.RawMessage `json:"category"`
 }
 
 type updateAppRequest struct {
-	Title       string `json:"title" binding:"required"`
-	Description string `json:"description"`
-	HTMLContent string `json:"html_content" binding:"required"`
+	Title       string          `json:"title" binding:"required"`
+	Description string          `json:"description"`
+	HTMLContent string          `json:"html_content" binding:"required"`
+	Category    json.RawMessage `json:"category"`
 }
 
 func ListApps(db *storage.DB) gin.HandlerFunc {
@@ -83,6 +86,7 @@ func CreateApp(db *storage.DB) gin.HandlerFunc {
 			Title:       req.Title,
 			Description: req.Description,
 			HTMLContent: req.HTMLContent,
+			Category:    req.Category,
 		})
 		if err != nil {
 			if strings.Contains(err.Error(), "unique") {
@@ -122,7 +126,7 @@ func UpdateApp(db *storage.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err := db.UpdateAppContent(c.Request.Context(), app.ID, req.Title, req.Description, req.HTMLContent); err != nil {
+		if err := db.UpdateAppContent(c.Request.Context(), app.ID, req.Title, req.Description, req.HTMLContent, req.Category); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "儲存失敗"})
 			return
 		}
