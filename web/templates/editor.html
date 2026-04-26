@@ -7,9 +7,22 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/theme/dracula.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2/dist/css/tom-select.default.min.css" />
   <style>
     .CodeMirror { height: 100%; font-size: 14px; }
     #editor-wrap { height: calc(100vh - 56px); }
+    /* Tom Select — white theme */
+    .ts-wrapper .ts-control { border-radius: .5rem; border-color: #e5e7eb; background: #fff; box-shadow: none; }
+    .ts-wrapper.focus .ts-control { border-color: #d1d5db; box-shadow: 0 0 0 3px rgba(0,0,0,.06); outline: none; }
+    .ts-control .item { background: #f3f4f6; color: #374151; border-color: #e5e7eb; border-radius: 9999px; }
+    .ts-control .item.active { background: #e5e7eb; color: #374151; }
+    .ts-control .item .remove { color: #9ca3af; border-left-color: #e5e7eb; }
+    .ts-control .item .remove:hover { background: transparent; color: #374151; }
+    .ts-dropdown { border-color: #e5e7eb; border-radius: .5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,.07); }
+    .ts-dropdown-content .option.active { background: #f9fafb; color: #111827; }
+    .ts-dropdown-content .option.selected { color: #6b7280; }
+    .ts-dropdown-content .option.selected.active { background: #f3f4f6; }
+    .ts-dropdown .create { color: #374151; }
   </style>
 </head>
 <body class="bg-gray-900 text-white flex flex-col h-screen overflow-hidden">
@@ -71,6 +84,26 @@
       <span id="public-url" class="text-xs text-gray-400 hidden sm:block truncate max-w-[180px]"></span>
       <button onclick="copyLink()" class="text-xs text-gray-400 hover:text-white transition hidden sm:block">Copy link</button>
 
+      <!-- Profile dropdown -->
+      <div class="relative shrink-0" id="profile-menu">
+        <button onclick="toggleProfile()" class="focus:outline-none">
+          <img id="nav-avatar" src="" alt="" class="w-7 h-7 rounded-full object-cover border border-gray-600 hover:ring-2 hover:ring-gray-500 transition" />
+        </button>
+        <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden text-left">
+          <div class="px-4 py-4 border-b border-gray-100">
+            <div class="flex items-center gap-3 mb-2">
+              <img id="dd-avatar" src="" alt="" class="w-10 h-10 rounded-full object-cover shrink-0" />
+              <div class="min-w-0">
+                <p id="dd-name" class="text-sm font-medium text-gray-800 truncate"></p>
+                <p id="dd-email" class="text-xs text-gray-400 truncate"></p>
+              </div>
+            </div>
+            <p id="dd-stats" class="text-xs text-gray-400"></p>
+          </div>
+          <button onclick="fetch('/auth/logout',{method:'POST'}).then(()=>location.href='/')" class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-50 transition">Sign Out</button>
+        </div>
+      </div>
+
       <!-- Preview: eye icon on mobile, text on desktop -->
       <a id="preview-btn" href="#" target="_blank" title="Preview"
         class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition px-3 py-1.5">
@@ -115,10 +148,8 @@
       <textarea id="info-description" rows="3" maxlength="300"
         class="w-full border rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
         placeholder="Briefly describe what your app does…"></textarea>
-      <label class="block text-xs text-gray-500 mb-2">Categories</label>
-      <div id="info-categories" class="flex flex-wrap gap-2 mb-4">
-        <!-- rendered by JS -->
-      </div>
+      <label class="block text-xs text-gray-500 mb-1">Category</label>
+      <div class="mb-4"><select id="info-category" multiple placeholder="Add categories…"></select></div>
       <div class="flex justify-end gap-3">
         <button onclick="closeInfoModal()" class="text-sm text-gray-500 hover:underline">Cancel</button>
         <button onclick="saveInfo()"
@@ -134,13 +165,12 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/htmlmixed/htmlmixed.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/edit/closetag.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/edit/matchbrackets.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2/dist/js/tom-select.complete.min.js"></script>
 
   <script>
     const APP_ID  = '{{.app_id}}';
     const PYCCODE = '{{.pyccode}}';
-    const CATEGORIES = ['Productivity', 'Game', 'Relaxation', 'Self-learning', 'Communication', 'Misc'];
-
-    let app = null, saveTimer = null;
+    let app = null, saveTimer = null, tsCategory = null;
 
     const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
       mode: 'htmlmixed',
@@ -164,7 +194,16 @@
       if (!app) return;
       document.getElementById('info-title').value = app.title || '';
       document.getElementById('info-description').value = app.description || '';
-      renderCategoryCheckboxes('info-categories', app.category || []);
+      if (tsCategory) tsCategory.destroy();
+      const cats = app.category || [];
+      tsCategory = new TomSelect('#info-category', {
+        create: true,
+        plugins: ['remove_button'],
+        createOnBlur: true,
+        persist: false,
+        options: cats.map(c => ({ value: c, text: c })),
+        items: cats,
+      });
       document.getElementById('info-modal').classList.remove('hidden');
     }
 
@@ -175,7 +214,7 @@
     async function saveInfo() {
       const title       = document.getElementById('info-title').value.trim();
       const description = document.getElementById('info-description').value.trim();
-      const category    = getChecked('info-categories');
+      const category    = tsCategory.getValue();
       if (!title) return;
       const html = editor.getValue();
       if (html.length > 500 * 1024) { setStatus('⚠ File exceeds 500 KB limit'); closeInfoModal(); return; }
@@ -197,21 +236,6 @@
         setStatus('Save failed: ' + (d.error || 'unknown error'));
         closeInfoModal();
       }
-    }
-
-    // --- Category helpers ---
-    function renderCategoryCheckboxes(containerId, selected) {
-      const sel = Array.isArray(selected) ? selected : [];
-      document.getElementById(containerId).innerHTML = CATEGORIES.map(c => `
-        <label class="flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer border rounded-full px-3 py-1 hover:bg-indigo-50 has-[:checked]:bg-indigo-100 has-[:checked]:border-indigo-400">
-          <input type="checkbox" value="${c}" ${sel.includes(c) ? 'checked' : ''} class="sr-only" />
-          ${c}
-        </label>
-      `).join('');
-    }
-
-    function getChecked(containerId) {
-      return Array.from(document.querySelectorAll(`#${containerId} input:checked`)).map(el => el.value);
     }
 
     // --- Init ---
@@ -237,6 +261,8 @@
 
     // --- Init ---
     async function init() {
+      const me = await fetch('/api/me').then(r => r.json());
+      setProfileUI(me);
       const res = await fetch(`/api/apps/${APP_ID}`);
       if (!res.ok) { alert('Could not load app.'); return; }
       app = await res.json();
@@ -281,6 +307,22 @@
       if (!app) return;
       navigator.clipboard.writeText(`${location.origin}/${PYCCODE}/${app.slug}`)
         .then(() => setStatus('Link copied!'));
+    }
+
+    function toggleProfile() {
+      document.getElementById('profile-dropdown').classList.toggle('hidden');
+    }
+    document.addEventListener('click', e => {
+      const m = document.getElementById('profile-menu');
+      if (m && !m.contains(e.target)) document.getElementById('profile-dropdown').classList.add('hidden');
+    });
+    function setProfileUI(me) {
+      const av = me.avatar_url || '';
+      ['nav-avatar', 'dd-avatar'].forEach(id => { const el = document.getElementById(id); if (el) el.src = av; });
+      document.getElementById('dd-name').textContent = me.name || me.display_name || me.pyccode;
+      document.getElementById('dd-email').textContent = me.email || '';
+      const t = me.app_count || 0, s = me.shelf_count || 0;
+      document.getElementById('dd-stats').textContent = `${t} app${t !== 1 ? 's' : ''} · ${s} on shelf`;
     }
 
     document.addEventListener('keydown', e => {

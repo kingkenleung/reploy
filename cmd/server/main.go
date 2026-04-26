@@ -105,11 +105,31 @@ func main() {
 		// Current user info
 		api.GET("/me", func(c *gin.Context) {
 			pyccode := c.GetString("pyccode")
+			userID := c.GetString("user_id")
+			user, _ := db.GetUserByID(c.Request.Context(), userID)
+			apps, _ := db.ListAppsByUser(c.Request.Context(), userID)
+			avatarURL, email, name := "", "", ""
+			if user != nil {
+				avatarURL = user.AvatarURL
+				email = user.Email
+				name = user.Name
+			}
+			shelfCount := 0
+			for _, a := range apps {
+				if a.Approved && !a.IsHidden {
+					shelfCount++
+				}
+			}
 			c.JSON(200, gin.H{
-				"user_id":      c.GetString("user_id"),
+				"user_id":      userID,
 				"pyccode":      pyccode,
 				"role":         c.GetString("role"),
 				"display_name": studlist.DisplayName(pyccode),
+				"avatar_url":   avatarURL,
+				"email":        email,
+				"name":         name,
+				"app_count":    len(apps),
+				"shelf_count":  shelfCount,
 			})
 		})
 	}

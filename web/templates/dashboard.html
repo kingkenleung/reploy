@@ -12,11 +12,27 @@
   <nav class="bg-white border-b px-6 py-3 flex items-center justify-between">
     <span class="text-indigo-600 font-bold text-xl">Reploy</span>
     <div class="flex items-center gap-4">
-      <span id="nav-identity" class="text-sm text-gray-500"></span>
       <a href="/dashboard" class="text-sm font-medium text-indigo-700 underline">My Apps</a>
       <a href="/shelf" class="text-sm text-indigo-600 hover:underline">Shelf</a>
       <a id="admin-link" href="/admin" class="hidden text-sm text-indigo-600 hover:underline">Admin Panel</a>
-      <button onclick="logout()" class="text-sm text-red-500 hover:underline">Sign Out</button>
+      <div class="relative" id="profile-menu">
+        <button onclick="toggleProfile()" class="focus:outline-none">
+          <img id="nav-avatar" src="" alt="" class="w-8 h-8 rounded-full object-cover border border-gray-200 hover:ring-2 hover:ring-gray-300 transition" />
+        </button>
+        <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+          <div class="px-4 py-4 border-b border-gray-100">
+            <div class="flex items-center gap-3 mb-2">
+              <img id="dd-avatar" src="" alt="" class="w-10 h-10 rounded-full object-cover shrink-0" />
+              <div class="min-w-0">
+                <p id="dd-name" class="text-sm font-medium text-gray-800 truncate"></p>
+                <p id="dd-email" class="text-xs text-gray-400 truncate"></p>
+              </div>
+            </div>
+            <p id="dd-stats" class="text-xs text-gray-400"></p>
+          </div>
+          <button onclick="logout()" class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-50 transition">Sign Out</button>
+        </div>
+      </div>
     </div>
   </nav>
 
@@ -62,10 +78,8 @@
     async function init() {
       const me = await fetch('/api/me').then(r => r.json());
       pyccode = me.pyccode;
-      document.getElementById('nav-identity').textContent = me.display_name || pyccode;
-      if (me.role === 'teacher') {
-        document.getElementById('admin-link').classList.remove('hidden');
-      }
+      setProfileUI(me);
+      if (me.role === 'teacher') document.getElementById('admin-link').classList.remove('hidden');
       loadApps();
     }
 
@@ -144,6 +158,22 @@
     function copyLink(pyccode, slug) {
       navigator.clipboard.writeText(`${location.origin}/${pyccode}/${slug}`)
         .then(() => alert('Link copied!'));
+    }
+
+    function toggleProfile() {
+      document.getElementById('profile-dropdown').classList.toggle('hidden');
+    }
+    document.addEventListener('click', e => {
+      const m = document.getElementById('profile-menu');
+      if (m && !m.contains(e.target)) document.getElementById('profile-dropdown').classList.add('hidden');
+    });
+    function setProfileUI(me) {
+      const av = me.avatar_url || '';
+      ['nav-avatar', 'dd-avatar'].forEach(id => { const el = document.getElementById(id); if (el) el.src = av; });
+      document.getElementById('dd-name').textContent = me.name || me.display_name || me.pyccode;
+      document.getElementById('dd-email').textContent = me.email || '';
+      const t = me.app_count || 0, s = me.shelf_count || 0;
+      document.getElementById('dd-stats').textContent = `${t} app${t !== 1 ? 's' : ''} · ${s} on shelf`;
     }
 
     async function logout() {

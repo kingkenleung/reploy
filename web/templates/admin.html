@@ -7,7 +7,22 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/theme/dracula.min.css" />
-  <style>.CodeMirror { height: 400px; font-size: 13px; }</style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2/dist/css/tom-select.default.min.css" />
+  <style>
+    .CodeMirror { height: 400px; font-size: 13px; }
+    /* Tom Select — white theme */
+    .ts-wrapper .ts-control { border-radius: .5rem; border-color: #e5e7eb; background: #fff; box-shadow: none; }
+    .ts-wrapper.focus .ts-control { border-color: #d1d5db; box-shadow: 0 0 0 3px rgba(0,0,0,.06); outline: none; }
+    .ts-control .item { background: #f3f4f6; color: #374151; border-color: #e5e7eb; border-radius: 9999px; }
+    .ts-control .item.active { background: #e5e7eb; color: #374151; }
+    .ts-control .item .remove { color: #9ca3af; border-left-color: #e5e7eb; }
+    .ts-control .item .remove:hover { background: transparent; color: #374151; }
+    .ts-dropdown { border-color: #e5e7eb; border-radius: .5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,.07); }
+    .ts-dropdown-content .option.active { background: #f9fafb; color: #111827; }
+    .ts-dropdown-content .option.selected { color: #6b7280; }
+    .ts-dropdown-content .option.selected.active { background: #f3f4f6; }
+    .ts-dropdown .create { color: #374151; }
+  </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
 
@@ -17,7 +32,24 @@
       <a href="/dashboard" class="text-sm text-indigo-600 hover:underline">My Apps</a>
       <a href="/shelf" class="text-sm text-indigo-600 hover:underline">Shelf</a>
       <a href="/admin" class="text-sm font-medium text-indigo-700 underline">Admin Panel</a>
-      <button onclick="logout()" class="text-sm text-red-500 hover:underline">Sign Out</button>
+      <div class="relative" id="profile-menu">
+        <button onclick="toggleProfile()" class="focus:outline-none">
+          <img id="nav-avatar" src="" alt="" class="w-8 h-8 rounded-full object-cover border border-gray-200 hover:ring-2 hover:ring-gray-300 transition" />
+        </button>
+        <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+          <div class="px-4 py-4 border-b border-gray-100">
+            <div class="flex items-center gap-3 mb-2">
+              <img id="dd-avatar" src="" alt="" class="w-10 h-10 rounded-full object-cover shrink-0" />
+              <div class="min-w-0">
+                <p id="dd-name" class="text-sm font-medium text-gray-800 truncate"></p>
+                <p id="dd-email" class="text-xs text-gray-400 truncate"></p>
+              </div>
+            </div>
+            <p id="dd-stats" class="text-xs text-gray-400"></p>
+          </div>
+          <button onclick="logout()" class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-50 transition">Sign Out</button>
+        </div>
+      </div>
     </div>
   </nav>
 
@@ -95,12 +127,10 @@
       </div>
       <input id="edit-title" type="text" placeholder="Title"
         class="w-full border rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-      <!-- Category checkboxes -->
+      <!-- Category input -->
       <div class="mb-3">
-        <p class="text-xs text-gray-500 mb-1">Categories</p>
-        <div id="edit-categories" class="flex flex-wrap gap-2">
-          <!-- rendered by JS -->
-        </div>
+        <p class="text-xs text-gray-500 mb-1">Category</p>
+        <select id="edit-category" multiple placeholder="Add categories…" class="w-full"></select>
       </div>
       <textarea id="edit-code"></textarea>
       <p id="edit-error" class="text-red-500 text-xs mt-2 hidden"></p>
@@ -117,17 +147,17 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/javascript/javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/css/css.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2/dist/js/tom-select.complete.min.js"></script>
 
   <script>
-    const CATEGORIES = ['Productivity', 'Game', 'Relaxation', 'Self-learning', 'Communication', 'Misc'];
-
     let allApps = [], allUsers = [], studMap = {};
-    let editAppId = null, editEditor = null;
+    let editAppId = null, editEditor = null, tsEditCategory = null;
     let isSuperAdmin = false;
 
     async function init() {
       const me = await fetch('/api/me').then(r => r.json());
       isSuperAdmin = (me.pyccode === 'lkh1');
+      setProfileUI(me);
 
       try {
         const studs = await fetch('https://www5.pyc.edu.hk/pycnet/api/stud_list.php').then(r => r.json());
@@ -305,19 +335,8 @@
       if (res.ok) { const u = allUsers.find(u => u.id === id); if (u) u.is_banned = !currentlyBanned; renderUsers(allUsers); }
     }
 
-    function renderCategoryCheckboxes(selected) {
-      const sel = Array.isArray(selected) ? selected : [];
-      document.getElementById('edit-categories').innerHTML = CATEGORIES.map(c => `
-        <label class="flex items-center gap-1 text-xs cursor-pointer select-none">
-          <input type="checkbox" value="${c}" ${sel.includes(c) ? 'checked' : ''}
-            class="rounded text-indigo-600" />
-          ${c}
-        </label>
-      `).join('');
-    }
-
     function getSelectedCategories() {
-      return Array.from(document.querySelectorAll('#edit-categories input:checked')).map(el => el.value);
+      return tsEditCategory ? tsEditCategory.getValue() : [];
     }
 
     function openEditModal(id, title) {
@@ -334,7 +353,18 @@
       fetch(`/admin/api/apps/${id}`).then(r => r.json()).then(app => {
         editEditor.setValue(app.html_content);
         editEditor.clearHistory();
-        renderCategoryCheckboxes(app.category || []);
+        if (tsEditCategory) tsEditCategory.destroy();
+        const allCats = [...new Set(allApps.flatMap(a => Array.isArray(a.category) ? a.category : []).filter(Boolean))];
+        const thisCats = app.category || [];
+        const optionValues = [...new Set([...allCats, ...thisCats])];
+        tsEditCategory = new TomSelect('#edit-category', {
+          create: true,
+          plugins: ['remove_button'],
+          options: optionValues.map(c => ({ value: c, text: c })),
+          items: thisCats,
+          createOnBlur: true,
+          persist: false,
+        });
       });
     }
 
@@ -363,6 +393,22 @@
         errEl.textContent = d.error || 'Save failed.';
         errEl.classList.remove('hidden');
       }
+    }
+
+    function toggleProfile() {
+      document.getElementById('profile-dropdown').classList.toggle('hidden');
+    }
+    document.addEventListener('click', e => {
+      const m = document.getElementById('profile-menu');
+      if (m && !m.contains(e.target)) document.getElementById('profile-dropdown').classList.add('hidden');
+    });
+    function setProfileUI(me) {
+      const av = me.avatar_url || '';
+      ['nav-avatar', 'dd-avatar'].forEach(id => { const el = document.getElementById(id); if (el) el.src = av; });
+      document.getElementById('dd-name').textContent = me.name || me.display_name || me.pyccode;
+      document.getElementById('dd-email').textContent = me.email || '';
+      const t = me.app_count || 0, s = me.shelf_count || 0;
+      document.getElementById('dd-stats').textContent = `${t} app${t !== 1 ? 's' : ''} · ${s} on shelf`;
     }
 
     async function logout() { await fetch('/auth/logout', { method: 'POST' }); location.href = '/'; }

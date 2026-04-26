@@ -70,14 +70,16 @@ func GoogleCallback(db *storage.DB, oauthCfg *auth.OAuthConfig) gin.HandlerFunc 
 			return
 		}
 
-		c.SetCookie("token", tokenStr, 60*60*24*7, "/", "", false, true)
+		c.SetSameSite(http.SameSiteLaxMode)
+		c.SetCookie("token", tokenStr, 60*60*24*7, "/", "", true, true)
 		c.Redirect(http.StatusTemporaryRedirect, "/dashboard")
 	}
 }
 
 func Logout() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.SetCookie("token", "", -1, "/", "", false, true)
+		c.SetSameSite(http.SameSiteLaxMode)
+		c.SetCookie("token", "", -1, "/", "", true, true)
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 	}
 }

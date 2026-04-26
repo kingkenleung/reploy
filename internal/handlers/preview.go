@@ -35,8 +35,8 @@ func PreviewApp(db *storage.DB) gin.HandlerFunc {
 		c.Header("X-Frame-Options", "SAMEORIGIN")
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("Referrer-Policy", "no-referrer")
-		// Prevent the preview from accessing the main app's cookies
 		c.Header("Cache-Control", "no-store")
+		c.Header("Content-Security-Policy", "connect-src 'none'")
 		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(app.HTMLContent))
 	}
 }
