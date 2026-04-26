@@ -19,5 +19,11 @@ reploy-*
 # Logs
 *.log
 
+# air hot reload
+tmp/
+
+# air hot reload
+tmp/
+
 # Claude Code
 .claude/

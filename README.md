@@ -23,56 +23,65 @@ A platform for high school ICT students to rapidly deploy LLM-generated HTML app
 
 ### Prerequisites
 
-- Go 1.22+
+- Go 1.25+
 - Docker + Docker Compose
+- [air](https://github.com/air-verse/air) for hot reload: `go install github.com/air-verse/air@latest`
 - A Google Cloud OAuth 2.0 credential
 
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/yourorg/reploy.git
+git clone https://github.com/kingkenleung/reploy.git
 cd reploy
 cp .env.example .env
-# Edit .env with your Google OAuth credentials and DB password
+# Edit .env — set DATABASE_URL to point at your local supabase-db (see step 2)
 ```
 
-### 2. Start Supabase (self-hosted)
+### 2. Start Supabase locally
 
 ```bash
-git clone --depth 1 https://github.com/supabase/supabase
-cd supabase/docker
+# Clone supabase into a sibling directory (one-time setup)
+git clone --depth 1 https://github.com/supabase/supabase ~/supabase-local
+cd ~/supabase-local/docker
 cp .env.example .env
-# Run the key generator and fill in .env
-bash utils/generate-keys.sh
-# Expose the DB port by adding to the db service in docker-compose.yml:
+# Expose the DB on port 5433 — add this under the `db` service in docker-compose.yml:
 #   ports:
 #     - "5433:5432"
 docker compose up -d
-cd -
 ```
 
-### 3. Run the database migration
+Set `DATABASE_URL` in `.env`:
+```
+DATABASE_URL=postgresql://postgres:<your-supabase-db-password>@localhost:5433/postgres?sslmode=disable
+```
+
+### 3. Run migrations
 
 ```bash
-docker exec -i supabase-db psql -U postgres -d postgres < migrations/001_init.sql
+docker exec -i supabase-db psql -U postgres < migrations/001_init.sql
+docker exec -i supabase-db psql -U postgres -c "ALTER TABLE apps ADD COLUMN IF NOT EXISTS category JSONB NOT NULL DEFAULT '[]';"
+docker exec -i supabase-db psql -U postgres -c "ALTER TABLE apps ADD COLUMN IF NOT EXISTS approved BOOLEAN NOT NULL DEFAULT false;"
 ```
 
-### 4. Promote yourself to teacher (after first login)
+### 4. Start the server with hot reload
 
 ```bash
-docker exec -i supabase-db psql -U postgres -d postgres \
-  -c "UPDATE users SET role='teacher' WHERE email='yourname@school.pyc.edu.hk';"
+air
 ```
 
-### 5. Start the server
+`air` watches for `.go` file changes and automatically rebuilds and restarts the server. Open http://localhost:3000.
 
+If you don't want hot reload:
 ```bash
 go run ./cmd/server
-# or build first:
-go build -o reploy ./cmd/server && ./reploy
 ```
 
-Open http://localhost:3000
+### 5. Promote yourself to teacher (after first login)
+
+```bash
+docker exec -i supabase-db psql -U postgres \
+  -c "UPDATE users SET role='teacher' WHERE email='yourname@school.pyc.edu.hk';"
+```
 
 ---
 

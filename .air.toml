@@ -1,0 +1,6 @@
+[build]
+  cmd = "go build -o ./tmp/reploy ./cmd/server"
+  bin = "./tmp/reploy"
+  include_ext = ["go"]
+  exclude_dir = ["tmp", "web"]
+  delay = 500
