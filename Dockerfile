@@ -10,5 +10,6 @@ RUN apk --no-cache add ca-certificates tzdata
 WORKDIR /app
 COPY --from=builder /app/reploy .
 COPY web/ web/
+COPY .allowlist .
 EXPOSE 3000
 CMD ["./reploy"]
