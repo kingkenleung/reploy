@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func PreviewApp(db *storage.DB) gin.HandlerFunc {
+func PreviewApp(db *storage.DB, connectSrc string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		pyccode := c.Param("pyccode")
 		slug := c.Param("slug")
@@ -36,7 +36,8 @@ func PreviewApp(db *storage.DB) gin.HandlerFunc {
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("Referrer-Policy", "no-referrer")
 		c.Header("Cache-Control", "no-store")
-		c.Header("Content-Security-Policy", "connect-src 'none'")
+		c.Header("Cross-Origin-Opener-Policy", "unsafe-none")
+		c.Header("Content-Security-Policy", "connect-src "+connectSrc)
 		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(app.HTMLContent))
 	}
 }

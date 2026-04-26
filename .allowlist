@@ -1,0 +1,18 @@
+# connect-src allowlist for student app previews.
+# One entry per line. Lines starting with # are ignored.
+# Requires a server restart to take effect.
+
+# WebSockets — PeerJS, custom game servers
+wss:
+
+# CDNs
+https://unpkg.com
+https://cdn.jsdelivr.net
+https://cdnjs.cloudflare.com
+https://raw.githubusercontent.com
+
+# Google APIs / OAuth
+https://www.googleapis.com
+https://apis.google.com
+https://accounts.google.com
+https://oauth2.googleapis.com

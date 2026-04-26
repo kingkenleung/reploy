@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"reploy/internal/auth"
 	"reploy/internal/handlers"
@@ -149,7 +150,7 @@ func main() {
 	}
 
 	// Public app preview — must be last to avoid route conflicts
-	r.GET("/:pyccode/:slug", handlers.PreviewApp(db))
+	r.GET("/:pyccode/:slug", handlers.PreviewApp(db, loadAllowlist(".allowlist")))
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -157,4 +158,23 @@ func main() {
 	}
 	log.Printf("Reploy running on :%s", port)
 	r.Run(":" + port)
+}
+
+func loadAllowlist(path string) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		log.Printf("Warning: could not read %s, defaulting to connect-src 'none': %v", path, err)
+		return "'none'"
+	}
+	var entries []string
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		entries = append(entries, line)
+	}
+	src := strings.Join(entries, " ")
+	log.Printf("Loaded connect-src allowlist (%d entries): %s", len(entries), src)
+	return src
 }
