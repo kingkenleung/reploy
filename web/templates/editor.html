@@ -7,8 +7,16 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/theme/dracula.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/fold/foldgutter.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2/dist/css/tom-select.default.min.css" />
   <style>
+    /* Search match highlights */
+    .cm-search-match         { background: rgba(255,200,0,.28); border-radius: 2px; }
+    .cm-search-match-current { background: rgba(255,160,0,.75); border-radius: 2px; }
+    /* Fold gutter — dark theme */
+    .CodeMirror-foldgutter-open, .CodeMirror-foldgutter-folded { color: #6272a4; cursor: pointer; padding: 0 2px; }
+    .CodeMirror-foldgutter-open:hover, .CodeMirror-foldgutter-folded:hover { color: #f8f8f2; }
+    #code-editor { display: none; }
     .CodeMirror { height: 100%; font-size: 14px; }
     #editor-wrap { height: calc(100vh - 56px); }
     /* Tom Select — white theme */
@@ -84,26 +92,6 @@
       <span id="public-url" class="text-xs text-gray-400 hidden sm:block truncate max-w-[180px]"></span>
       <button onclick="copyLink()" class="text-xs text-gray-400 hover:text-white transition hidden sm:block">Copy link</button>
 
-      <!-- Profile dropdown -->
-      <div class="relative shrink-0" id="profile-menu">
-        <button onclick="toggleProfile()" class="focus:outline-none">
-          <img id="nav-avatar" src="" alt="" class="w-7 h-7 rounded-full object-cover border border-gray-600 hover:ring-2 hover:ring-gray-500 transition" />
-        </button>
-        <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden text-left">
-          <div class="px-4 py-4 border-b border-gray-100">
-            <div class="flex items-center gap-3 mb-2">
-              <img id="dd-avatar" src="" alt="" class="w-10 h-10 rounded-full object-cover shrink-0" />
-              <div class="min-w-0">
-                <p id="dd-name" class="text-sm font-medium text-gray-800 truncate"></p>
-                <p id="dd-email" class="text-xs text-gray-400 truncate"></p>
-              </div>
-            </div>
-            <p id="dd-stats" class="text-xs text-gray-400"></p>
-          </div>
-          <button onclick="fetch('/auth/logout',{method:'POST'}).then(()=>location.href='/')" class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-50 transition">Sign Out</button>
-        </div>
-      </div>
-
       <!-- Preview: eye icon on mobile, text on desktop -->
       <a id="preview-btn" href="#" target="_blank" title="Preview"
         class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition px-3 py-1.5">
@@ -126,12 +114,42 @@
         </svg>
         <span class="hidden sm:inline text-sm">Save</span>
       </button>
+
+      <!-- Profile dropdown (top-right corner) -->
+      <div class="relative shrink-0" id="profile-menu">
+        <button onclick="toggleProfile()" class="focus:outline-none ml-1">
+          <img id="nav-avatar" src="" alt="" class="w-7 h-7 rounded-full object-cover border border-gray-600 hover:ring-2 hover:ring-gray-500 transition" />
+        </button>
+        <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden text-left">
+          <div class="px-4 py-4 border-b border-gray-100">
+            <div class="flex items-center gap-3 mb-2">
+              <img id="dd-avatar" src="" alt="" class="w-10 h-10 rounded-full object-cover shrink-0" />
+              <div class="min-w-0">
+                <p id="dd-name" class="text-sm font-medium text-gray-800 truncate"></p>
+                <p id="dd-email" class="text-xs text-gray-400 truncate"></p>
+              </div>
+            </div>
+            <p id="dd-stats" class="text-xs text-gray-400"></p>
+          </div>
+          <button onclick="fetch('/auth/logout',{method:'POST'}).then(()=>location.href='/')" class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-50 transition">Sign Out</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- CodeMirror -->
-  <div id="editor-wrap" class="flex-1 overflow-hidden">
+  <div id="editor-wrap" class="flex-1 overflow-hidden relative">
     <textarea id="code-editor"></textarea>
+    <!-- Custom search bar -->
+    <div id="search-bar" class="hidden absolute top-0 right-4 z-40 flex items-center gap-2 bg-gray-800 border border-gray-600 border-t-0 rounded-b-lg px-3 py-2 shadow-xl">
+      <input id="search-input" type="text" placeholder="Find in file…"
+        oninput="doSearch()" onkeydown="handleSearchKey(event)"
+        class="bg-gray-700 text-white text-sm px-2 py-1 rounded outline-none border border-gray-600 focus:border-indigo-400 w-44 placeholder-gray-500" />
+      <span id="search-count" class="text-gray-400 text-xs w-16 text-center shrink-0"></span>
+      <button onclick="searchPrev()" title="Previous (Shift+Enter)" class="text-gray-300 hover:text-white p-1 rounded hover:bg-gray-700">↑</button>
+      <button onclick="searchNext()" title="Next (Enter)" class="text-gray-300 hover:text-white p-1 rounded hover:bg-gray-700">↓</button>
+      <button onclick="closeSearch()" title="Close (Esc)" class="text-gray-400 hover:text-white p-1 rounded hover:bg-gray-700 ml-1">✕</button>
+    </div>
   </div>
 
   <!-- App Info Modal -->
@@ -165,6 +183,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/htmlmixed/htmlmixed.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/edit/closetag.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/edit/matchbrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/fold/foldcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/fold/foldgutter.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/fold/xml-fold.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/fold/brace-fold.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/display/active-line.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/comment/comment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/search/searchcursor.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tom-select@2/dist/js/tom-select.complete.min.js"></script>
 
   <script>
@@ -181,6 +206,12 @@
       lineWrapping: false,
       tabSize: 2,
       indentWithTabs: false,
+      foldGutter: true,
+      gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+      extraKeys: {
+        'Ctrl-/': 'toggleComment',
+        'Cmd-/':  'toggleComment',
+      },
     });
 
     editor.on('change', () => {
@@ -325,8 +356,85 @@
       document.getElementById('dd-stats').textContent = `${t} app${t !== 1 ? 's' : ''} · ${s} on shelf`;
     }
 
+    // --- Search ---
+    let searchMatches = [], searchIndex = -1, searchMarks = [];
+
+    function openSearch() {
+      const bar = document.getElementById('search-bar');
+      bar.classList.remove('hidden');
+      const input = document.getElementById('search-input');
+      const sel = editor.getSelection();
+      if (sel && sel.length < 200) input.value = sel;
+      input.focus();
+      input.select();
+      if (input.value) doSearch();
+    }
+
+    function closeSearch() {
+      document.getElementById('search-bar').classList.add('hidden');
+      searchMarks.forEach(m => m.clear());
+      searchMarks = [];
+      searchMatches = [];
+      searchIndex = -1;
+      document.getElementById('search-count').textContent = '';
+      editor.focus();
+    }
+
+    function doSearch() {
+      searchMarks.forEach(m => m.clear());
+      searchMarks = [];
+      searchMatches = [];
+      const query = document.getElementById('search-input').value;
+      if (!query) { document.getElementById('search-count').textContent = ''; return; }
+      const cursor = editor.getSearchCursor(query, CodeMirror.Pos(0, 0), { caseFold: true });
+      while (cursor.findNext()) {
+        searchMatches.push({ from: cursor.from(), to: cursor.to() });
+      }
+      if (searchMatches.length) {
+        searchIndex = 0;
+        applySearchMarks();
+        editor.scrollIntoView(searchMatches[0], 80);
+        editor.setSelection(searchMatches[0].from, searchMatches[0].to);
+      } else {
+        document.getElementById('search-count').textContent = 'No results';
+      }
+    }
+
+    function applySearchMarks() {
+      searchMarks.forEach(m => m.clear());
+      searchMarks = searchMatches.map((m, i) =>
+        editor.markText(m.from, m.to, {
+          className: i === searchIndex ? 'cm-search-match-current' : 'cm-search-match'
+        })
+      );
+      const el = document.getElementById('search-count');
+      el.textContent = `${searchIndex + 1} / ${searchMatches.length}`;
+    }
+
+    function searchNext() {
+      if (!searchMatches.length) return;
+      searchIndex = (searchIndex + 1) % searchMatches.length;
+      applySearchMarks();
+      editor.scrollIntoView(searchMatches[searchIndex], 80);
+      editor.setSelection(searchMatches[searchIndex].from, searchMatches[searchIndex].to);
+    }
+
+    function searchPrev() {
+      if (!searchMatches.length) return;
+      searchIndex = (searchIndex - 1 + searchMatches.length) % searchMatches.length;
+      applySearchMarks();
+      editor.scrollIntoView(searchMatches[searchIndex], 80);
+      editor.setSelection(searchMatches[searchIndex].from, searchMatches[searchIndex].to);
+    }
+
+    function handleSearchKey(e) {
+      if (e.key === 'Enter')  { e.preventDefault(); e.shiftKey ? searchPrev() : searchNext(); }
+      if (e.key === 'Escape') { e.preventDefault(); closeSearch(); }
+    }
+
     document.addEventListener('keydown', e => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveNow(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); openSearch(); }
     });
 
     init();
