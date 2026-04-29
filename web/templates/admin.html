@@ -1,394 +1,615 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reploy — Admin Panel</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/theme/dracula.min.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2/dist/css/tom-select.default.min.css" />
-  <style>
-    .CodeMirror { height: 400px; font-size: 13px; }
-    /* Tom Select — white theme */
-    .ts-wrapper .ts-control { border-radius: .5rem; border-color: #e5e7eb; background: #fff; box-shadow: none; }
-    .ts-wrapper.focus .ts-control { border-color: #d1d5db; box-shadow: 0 0 0 3px rgba(0,0,0,.06); outline: none; }
-    .ts-control .item { background: #f3f4f6; color: #374151; border-color: #e5e7eb; border-radius: 9999px; }
-    .ts-control .item.active { background: #e5e7eb; color: #374151; }
-    .ts-control .item .remove { color: #9ca3af; border-left-color: #e5e7eb; }
-    .ts-control .item .remove:hover { background: transparent; color: #374151; }
-    .ts-dropdown { border-color: #e5e7eb; border-radius: .5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,.07); }
-    .ts-dropdown-content .option.active { background: #f9fafb; color: #111827; }
-    .ts-dropdown-content .option.selected { color: #6b7280; }
-    .ts-dropdown-content .option.selected.active { background: #f3f4f6; }
-    .ts-dropdown .create { color: #374151; }
-  </style>
-</head>
-<body class="bg-gray-50 min-h-screen">
-
-  <nav class="bg-white border-b px-6 py-3 flex items-center justify-between">
-    <span class="text-indigo-600 font-bold text-xl">Reploy</span>
-    <div class="flex gap-4 items-center">
-      <a href="/dashboard" class="text-sm text-indigo-600 hover:underline">My Apps</a>
-      <a href="/shelf" class="text-sm text-indigo-600 hover:underline">Shelf</a>
-      <a href="/admin" class="text-sm font-medium text-indigo-700 underline">Admin Panel</a>
-      <div class="relative" id="profile-menu">
-        <button onclick="toggleProfile()" class="focus:outline-none">
-          <img id="nav-avatar" src="" alt="" class="w-8 h-8 rounded-full object-cover border border-gray-200 hover:ring-2 hover:ring-gray-300 transition" />
-        </button>
-        <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
-          <div class="px-4 py-4 border-b border-gray-100">
-            <div class="flex items-center gap-3 mb-2">
-              <img id="dd-avatar" src="" alt="" class="w-10 h-10 rounded-full object-cover shrink-0" />
-              <div class="min-w-0">
-                <p id="dd-name" class="text-sm font-medium text-gray-800 truncate"></p>
-                <p id="dd-email" class="text-xs text-gray-400 truncate"></p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reploy — Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/theme/dracula.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/tom-select@2/dist/css/tom-select.default.min.css"
+    />
+    <style>
+      .CodeMirror {
+        height: 400px;
+        font-size: 13px;
+      }
+      /* Tom Select — white theme */
+      .ts-wrapper .ts-control {
+        border-radius: 0.5rem;
+        border-color: #e5e7eb;
+        background: #fff;
+        box-shadow: none;
+      }
+      .ts-wrapper.focus .ts-control {
+        border-color: #d1d5db;
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+        outline: none;
+      }
+      .ts-control .item {
+        background: #f3f4f6;
+        color: #374151;
+        border-color: #e5e7eb;
+        border-radius: 9999px;
+      }
+      .ts-control .item.active {
+        background: #e5e7eb;
+        color: #374151;
+      }
+      .ts-control .item .remove {
+        color: #9ca3af;
+        border-left-color: #e5e7eb;
+      }
+      .ts-control .item .remove:hover {
+        background: transparent;
+        color: #374151;
+      }
+      .ts-dropdown {
+        border-color: #e5e7eb;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+      }
+      .ts-dropdown-content .option.active {
+        background: #f9fafb;
+        color: #111827;
+      }
+      .ts-dropdown-content .option.selected {
+        color: #6b7280;
+      }
+      .ts-dropdown-content .option.selected.active {
+        background: #f3f4f6;
+      }
+      .ts-dropdown .create {
+        color: #374151;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white border-b px-6 py-3 flex items-center justify-between">
+      <span class="text-indigo-600 font-bold text-xl">Reploy</span>
+      <div class="flex gap-4 items-center">
+        <a href="/dashboard" class="text-sm text-indigo-600 hover:underline"
+          >My Apps</a
+        >
+        <a href="/shelf" class="text-sm text-indigo-600 hover:underline"
+          >Shelf</a
+        >
+        <a href="/admin" class="text-sm font-medium text-indigo-700 underline"
+          >Admin Panel</a
+        >
+        <div class="relative mt-2" id="profile-menu">
+          <button onclick="toggleProfile()" class="focus:outline-none">
+            <img
+              id="nav-avatar"
+              src=""
+              alt=""
+              class="w-8 h-8 rounded-full object-cover border border-gray-200 hover:ring-2 hover:ring-gray-300 transition"
+            />
+          </button>
+          <div
+            id="profile-dropdown"
+            class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
+          >
+            <div class="px-4 py-4 border-b border-gray-100">
+              <div class="flex items-center gap-3 mb-2">
+                <img
+                  id="dd-avatar"
+                  src=""
+                  alt=""
+                  class="w-10 h-10 rounded-full object-cover shrink-0"
+                />
+                <div class="min-w-0">
+                  <p
+                    id="dd-name"
+                    class="text-sm font-medium text-gray-800 truncate"
+                  ></p>
+                  <p id="dd-email" class="text-xs text-gray-400 truncate"></p>
+                </div>
               </div>
+              <p id="dd-stats" class="text-xs text-gray-400"></p>
             </div>
-            <p id="dd-stats" class="text-xs text-gray-400"></p>
+            <button
+              onclick="logout()"
+              class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-50 transition"
+            >
+              Sign Out
+            </button>
           </div>
-          <button onclick="logout()" class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-50 transition">Sign Out</button>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      <!-- Tabs -->
+      <div class="flex gap-2 mb-6">
+        <button
+          onclick="showTab('apps')"
+          id="tab-apps"
+          class="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white"
+        >
+          All Apps
+        </button>
+        <button
+          onclick="showTab('users')"
+          id="tab-users"
+          class="px-4 py-2 rounded-lg text-sm font-medium bg-white border text-gray-600 hover:bg-gray-50"
+        >
+          Users
+        </button>
+        <button
+          onclick="showTab('students')"
+          id="tab-students"
+          class="px-4 py-2 rounded-lg text-sm font-medium bg-white border text-gray-600 hover:bg-gray-50"
+        >
+          All Students
+        </button>
+        <button
+          onclick="showTab('teachers')"
+          id="tab-teachers"
+          class="px-4 py-2 rounded-lg text-sm font-medium bg-white border text-gray-600 hover:bg-gray-50"
+        >
+          Teachers
+        </button>
+      </div>
+
+      <!-- Apps Tab -->
+      <div id="tab-apps-content">
+        <div class="mb-4">
+          <input
+            id="search-apps"
+            type="text"
+            placeholder="Search by title or PYC code…"
+            oninput="filterApps()"
+            class="border rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+        </div>
+        <div class="bg-white rounded-xl border overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+              <tr>
+                <th class="px-4 py-3 text-left">Title</th>
+                <th class="px-4 py-3 text-left">Student</th>
+                <th class="px-4 py-3 text-left">Public Link</th>
+                <th class="px-4 py-3 text-left">Categories</th>
+                <th class="px-4 py-3 text-left">Status</th>
+                <th class="px-4 py-3 text-left">Shelf</th>
+                <th class="px-4 py-3 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="apps-tbody">
+              <tr>
+                <td colspan="6" class="text-center py-8 text-gray-400">
+                  Loading…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Users Tab -->
+      <div id="tab-users-content" class="hidden">
+        <div class="mb-4">
+          <input
+            id="search-users"
+            type="text"
+            placeholder="Search by PYC code or name…"
+            oninput="filterUsers()"
+            class="border rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+        </div>
+        <div class="bg-white rounded-xl border overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+              <tr>
+                <th class="px-4 py-3 text-left">PYC Code</th>
+                <th class="px-4 py-3 text-left">Name</th>
+                <th class="px-4 py-3 text-left">Class</th>
+                <th class="px-4 py-3 text-left">Email</th>
+                <th class="px-4 py-3 text-left">Role</th>
+                <th class="px-4 py-3 text-left">Status</th>
+                <th class="px-4 py-3 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr>
+                <td colspan="7" class="text-center py-8 text-gray-400">
+                  Loading…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- All Students Tab -->
+      <div id="tab-students-content" class="hidden">
+        <div class="mb-4">
+          <input
+            id="search-students"
+            type="text"
+            placeholder="Search by PYC code, name or class…"
+            oninput="filterStudents()"
+            class="border rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+        </div>
+        <div class="bg-white rounded-xl border overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+              <tr>
+                <th class="px-4 py-3 text-left">PYC Code</th>
+                <th class="px-4 py-3 text-left">Class</th>
+                <th class="px-4 py-3 text-left">No.</th>
+                <th class="px-4 py-3 text-left">Name</th>
+                <th class="px-4 py-3 text-left">Apps</th>
+              </tr>
+            </thead>
+            <tbody id="students-tbody">
+              <tr>
+                <td colspan="5" class="text-center py-8 text-gray-400">
+                  Loading…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Teachers Tab -->
+      <div id="tab-teachers-content" class="hidden">
+        <div class="mb-4">
+          <input
+            id="search-teachers"
+            type="text"
+            placeholder="Search by PYC code, name or email…"
+            oninput="filterTeachers()"
+            class="border rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+        </div>
+        <div class="bg-white rounded-xl border overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+              <tr>
+                <th class="px-4 py-3 text-left">PYC Code</th>
+                <th class="px-4 py-3 text-left">Name</th>
+                <th class="px-4 py-3 text-left">Email</th>
+                <th class="px-4 py-3 text-left">Apps</th>
+              </tr>
+            </thead>
+            <tbody id="teachers-tbody">
+              <tr>
+                <td colspan="4" class="text-center py-8 text-gray-400">
+                  Loading…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- Edit Code Modal -->
+    <div
+      id="edit-modal"
+      class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
+    >
+      <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-3xl">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold">Edit App Code</h2>
+          <button
+            onclick="closeEditModal()"
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none"
+          >
+            ✕
+          </button>
+        </div>
+        <input
+          id="edit-title"
+          type="text"
+          placeholder="Title"
+          class="w-full border rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        />
+        <!-- Category input -->
+        <div class="mb-3">
+          <p class="text-xs text-gray-500 mb-1">Category</p>
+          <select
+            id="edit-category"
+            multiple
+            placeholder="Add categories…"
+            class="w-full"
+          ></select>
+        </div>
+        <textarea id="edit-code"></textarea>
+        <p id="edit-error" class="text-red-500 text-xs mt-2 hidden"></p>
+        <div class="flex justify-end gap-3 mt-4">
+          <button
+            onclick="closeEditModal()"
+            class="text-sm text-gray-500 hover:underline"
+          >
+            Cancel
+          </button>
+          <button
+            onclick="saveEdit()"
+            class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700"
+          >
+            Save
+          </button>
         </div>
       </div>
     </div>
-  </nav>
 
-  <main class="max-w-6xl mx-auto px-4 py-8">
-
-    <!-- Tabs -->
-    <div class="flex gap-2 mb-6">
-      <button onclick="showTab('apps')" id="tab-apps"
-        class="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white">All Apps</button>
-      <button onclick="showTab('users')" id="tab-users"
-        class="px-4 py-2 rounded-lg text-sm font-medium bg-white border text-gray-600 hover:bg-gray-50">Users</button>
-      <button onclick="showTab('students')" id="tab-students"
-        class="px-4 py-2 rounded-lg text-sm font-medium bg-white border text-gray-600 hover:bg-gray-50">All Students</button>
-      <button onclick="showTab('teachers')" id="tab-teachers"
-        class="px-4 py-2 rounded-lg text-sm font-medium bg-white border text-gray-600 hover:bg-gray-50">Teachers</button>
-    </div>
-
-    <!-- Apps Tab -->
-    <div id="tab-apps-content">
-      <div class="mb-4">
-        <input id="search-apps" type="text" placeholder="Search by title or PYC code…"
-          oninput="filterApps()"
-          class="border rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-      </div>
-      <div class="bg-white rounded-xl border overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
-            <tr>
-              <th class="px-4 py-3 text-left">Title</th>
-              <th class="px-4 py-3 text-left">Student</th>
-              <th class="px-4 py-3 text-left">Public Link</th>
-              <th class="px-4 py-3 text-left">Categories</th>
-              <th class="px-4 py-3 text-left">Status</th>
-              <th class="px-4 py-3 text-left">Shelf</th>
-              <th class="px-4 py-3 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="apps-tbody">
-            <tr><td colspan="6" class="text-center py-8 text-gray-400">Loading…</td></tr>
-          </tbody>
-        </table>
+    <!-- Student Apps Modal -->
+    <div
+      id="student-modal"
+      class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
+    >
+      <div
+        class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg max-h-[80vh] flex flex-col"
+      >
+        <div class="flex items-center justify-between mb-4 shrink-0">
+          <h2 class="text-lg font-bold" id="student-modal-name"></h2>
+          <button
+            onclick="
+              currentModalPyccode = null;
+              document.getElementById('student-modal').classList.add('hidden');
+            "
+            class="text-gray-400 hover:text-gray-600 text-xl leading-none"
+          >
+            ✕
+          </button>
+        </div>
+        <div
+          id="student-apps-list"
+          class="overflow-y-auto flex-1 min-h-0"
+        ></div>
       </div>
     </div>
 
-    <!-- Users Tab -->
-    <div id="tab-users-content" class="hidden">
-      <div class="mb-4">
-        <input id="search-users" type="text" placeholder="Search by PYC code or name…"
-          oninput="filterUsers()"
-          class="border rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-      </div>
-      <div class="bg-white rounded-xl border overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
-            <tr>
-              <th class="px-4 py-3 text-left">PYC Code</th>
-              <th class="px-4 py-3 text-left">Name</th>
-              <th class="px-4 py-3 text-left">Class</th>
-              <th class="px-4 py-3 text-left">Email</th>
-              <th class="px-4 py-3 text-left">Role</th>
-              <th class="px-4 py-3 text-left">Status</th>
-              <th class="px-4 py-3 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="users-tbody">
-            <tr><td colspan="7" class="text-center py-8 text-gray-400">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2/dist/js/tom-select.complete.min.js"></script>
 
-    <!-- All Students Tab -->
-    <div id="tab-students-content" class="hidden">
-      <div class="mb-4">
-        <input id="search-students" type="text" placeholder="Search by PYC code, name or class…"
-          oninput="filterStudents()"
-          class="border rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-      </div>
-      <div class="bg-white rounded-xl border overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
-            <tr>
-              <th class="px-4 py-3 text-left">PYC Code</th>
-              <th class="px-4 py-3 text-left">Class</th>
-              <th class="px-4 py-3 text-left">No.</th>
-              <th class="px-4 py-3 text-left">Name</th>
-              <th class="px-4 py-3 text-left">Apps</th>
-            </tr>
-          </thead>
-          <tbody id="students-tbody">
-            <tr><td colspan="5" class="text-center py-8 text-gray-400">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <script>
+      let allApps = [],
+        allUsers = [],
+        studMap = {};
+      let editAppId = null,
+        editEditor = null,
+        tsEditCategory = null;
+      let isSuperAdmin = false;
+      let currentModalPyccode = null;
 
-    <!-- Teachers Tab -->
-    <div id="tab-teachers-content" class="hidden">
-      <div class="mb-4">
-        <input id="search-teachers" type="text" placeholder="Search by PYC code, name or email…"
-          oninput="filterTeachers()"
-          class="border rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-      </div>
-      <div class="bg-white rounded-xl border overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
-            <tr>
-              <th class="px-4 py-3 text-left">PYC Code</th>
-              <th class="px-4 py-3 text-left">Name</th>
-              <th class="px-4 py-3 text-left">Email</th>
-              <th class="px-4 py-3 text-left">Apps</th>
-            </tr>
-          </thead>
-          <tbody id="teachers-tbody">
-            <tr><td colspan="4" class="text-center py-8 text-gray-400">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
+      async function init() {
+        const me = await fetch("/api/me").then((r) => r.json());
+        isSuperAdmin = me.pyccode === "lkh1";
+        setProfileUI(me);
 
-  <!-- Edit Code Modal -->
-  <div id="edit-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-    <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-3xl">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-bold">Edit App Code</h2>
-        <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
-      </div>
-      <input id="edit-title" type="text" placeholder="Title"
-        class="w-full border rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-      <!-- Category input -->
-      <div class="mb-3">
-        <p class="text-xs text-gray-500 mb-1">Category</p>
-        <select id="edit-category" multiple placeholder="Add categories…" class="w-full"></select>
-      </div>
-      <textarea id="edit-code"></textarea>
-      <p id="edit-error" class="text-red-500 text-xs mt-2 hidden"></p>
-      <div class="flex justify-end gap-3 mt-4">
-        <button onclick="closeEditModal()" class="text-sm text-gray-500 hover:underline">Cancel</button>
-        <button onclick="saveEdit()"
-          class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">Save</button>
-      </div>
-    </div>
-  </div>
+        try {
+          const studs = await fetch(
+            "https://www5.pyc.edu.hk/pycnet/api/stud_list.php",
+          ).then((r) => r.json());
+          studs.forEach((s) => {
+            studMap[s.pyccode] = s;
+          });
+        } catch (e) {
+          console.warn("Could not load student list", e);
+        }
 
-  <!-- Student Apps Modal -->
-  <div id="student-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-    <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg max-h-[80vh] flex flex-col">
-      <div class="flex items-center justify-between mb-4 shrink-0">
-        <h2 class="text-lg font-bold" id="student-modal-name"></h2>
-        <button onclick="currentModalPyccode=null; document.getElementById('student-modal').classList.add('hidden')"
-          class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
-      </div>
-      <div id="student-apps-list" class="overflow-y-auto flex-1 min-h-0"></div>
-    </div>
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/xml/xml.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/javascript/javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/css/css.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/htmlmixed/htmlmixed.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tom-select@2/dist/js/tom-select.complete.min.js"></script>
-
-  <script>
-    let allApps = [], allUsers = [], studMap = {};
-    let editAppId = null, editEditor = null, tsEditCategory = null;
-    let isSuperAdmin = false;
-    let currentModalPyccode = null;
-
-    async function init() {
-      const me = await fetch('/api/me').then(r => r.json());
-      isSuperAdmin = (me.pyccode === 'lkh1');
-      setProfileUI(me);
-
-      try {
-        const studs = await fetch('https://www5.pyc.edu.hk/pycnet/api/stud_list.php').then(r => r.json());
-        studs.forEach(s => { studMap[s.pyccode] = s; });
-      } catch(e) { console.warn('Could not load student list', e); }
-
-      const [apps, users] = await Promise.all([
-        fetch('/admin/api/apps').then(r => r.json()),
-        fetch('/admin/api/users').then(r => r.json()),
-      ]);
-      allApps  = apps  || [];
-      allUsers = users || [];
-      renderApps(allApps);
-      renderUsers(allUsers);
-      renderStudents(getAllStudentsSorted());
-      renderTeachers(getTeachers());
-    }
-
-    function displayName(pyccode) {
-      const s = studMap[pyccode];
-      if (s) return `${s.cls} ${s.num} ${s.userename}`;
-      return pyccode;
-    }
-
-    function showTab(tab) {
-      const active   = 'px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white';
-      const inactive = 'px-4 py-2 rounded-lg text-sm font-medium bg-white border text-gray-600 hover:bg-gray-50';
-      ['apps', 'users', 'students', 'teachers'].forEach(t => {
-        document.getElementById(`tab-${t}-content`).classList.toggle('hidden', tab !== t);
-        document.getElementById(`tab-${t}`).className = tab === t ? active : inactive;
-      });
-    }
-
-    function filterApps() {
-      const q = document.getElementById('search-apps').value.toLowerCase();
-      renderApps(allApps.filter(a =>
-        a.title.toLowerCase().includes(q) || (a.owner_pyccode || '').toLowerCase().includes(q)
-      ));
-    }
-
-    function filterUsers() {
-      const q = document.getElementById('search-users').value.toLowerCase();
-      renderUsers(allUsers.filter(u =>
-        u.pyccode.toLowerCase().includes(q) ||
-        u.name.toLowerCase().includes(q) ||
-        displayName(u.pyccode).toLowerCase().includes(q)
-      ));
-    }
-
-    function renderCategoryBadges(category) {
-      if (!category || !category.length) return '<span class="text-gray-300 text-xs">—</span>';
-      return category.map(c =>
-        `<span class="bg-indigo-50 text-indigo-600 text-xs px-2 py-0.5 rounded-full">${esc(c)}</span>`
-      ).join(' ');
-    }
-
-    function renderApps(apps) {
-      const tbody = document.getElementById('apps-tbody');
-      if (!apps.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">No apps found.</td></tr>';
-        return;
+        const [apps, users] = await Promise.all([
+          fetch("/admin/api/apps").then((r) => r.json()),
+          fetch("/admin/api/users").then((r) => r.json()),
+        ]);
+        allApps = apps || [];
+        allUsers = users || [];
+        renderApps(allApps);
+        renderUsers(allUsers);
+        renderStudents(getAllStudentsSorted());
+        renderTeachers(getTeachers());
       }
-      tbody.innerHTML = apps.map(a => `
+
+      function displayName(pyccode) {
+        const s = studMap[pyccode];
+        if (s) return `${s.cls} ${s.num} ${s.userename}`;
+        return pyccode;
+      }
+
+      function showTab(tab) {
+        const active =
+          "px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white";
+        const inactive =
+          "px-4 py-2 rounded-lg text-sm font-medium bg-white border text-gray-600 hover:bg-gray-50";
+        ["apps", "users", "students", "teachers"].forEach((t) => {
+          document
+            .getElementById(`tab-${t}-content`)
+            .classList.toggle("hidden", tab !== t);
+          document.getElementById(`tab-${t}`).className =
+            tab === t ? active : inactive;
+        });
+      }
+
+      function filterApps() {
+        const q = document.getElementById("search-apps").value.toLowerCase();
+        renderApps(
+          allApps.filter(
+            (a) =>
+              a.title.toLowerCase().includes(q) ||
+              (a.owner_pyccode || "").toLowerCase().includes(q),
+          ),
+        );
+      }
+
+      function filterUsers() {
+        const q = document.getElementById("search-users").value.toLowerCase();
+        renderUsers(
+          allUsers.filter(
+            (u) =>
+              u.pyccode.toLowerCase().includes(q) ||
+              u.name.toLowerCase().includes(q) ||
+              displayName(u.pyccode).toLowerCase().includes(q),
+          ),
+        );
+      }
+
+      function renderCategoryBadges(category) {
+        if (!category || !category.length)
+          return '<span class="text-gray-300 text-xs">—</span>';
+        return category
+          .map(
+            (c) =>
+              `<span class="bg-indigo-50 text-indigo-600 text-xs px-2 py-0.5 rounded-full">${esc(c)}</span>`,
+          )
+          .join(" ");
+      }
+
+      function renderApps(apps) {
+        const tbody = document.getElementById("apps-tbody");
+        if (!apps.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="7" class="text-center py-8 text-gray-400">No apps found.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = apps
+          .map(
+            (a) => `
         <tr class="border-t hover:bg-gray-50">
           <td class="px-4 py-3 font-medium">${esc(a.title)}</td>
-          <td class="px-4 py-3 text-gray-600 text-xs">${esc(displayName(a.owner_pyccode || ''))}</td>
+          <td class="px-4 py-3 text-gray-600 text-xs">${esc(displayName(a.owner_pyccode || ""))}</td>
           <td class="px-4 py-3">
             <a href="/${esc(a.owner_pyccode)}/${esc(a.slug)}" target="_blank"
                class="text-indigo-500 hover:underline text-xs">/${esc(a.owner_pyccode)}/${esc(a.slug)}</a>
           </td>
           <td class="px-4 py-3">${renderCategoryBadges(a.category)}</td>
           <td class="px-4 py-3">
-            ${a.is_hidden
-              ? '<span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">Hidden</span>'
-              : '<span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">Public</span>'}
+            ${
+              a.is_hidden
+                ? '<span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">Hidden</span>'
+                : '<span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">Public</span>'
+            }
           </td>
           <td class="px-4 py-3">
-            ${a.approved
-              ? '<span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full">On Shelf</span>'
-              : '<span class="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full">Not approved</span>'}
+            ${
+              a.approved
+                ? '<span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full">On Shelf</span>'
+                : '<span class="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full">Not approved</span>'
+            }
           </td>
           <td class="px-4 py-3 flex gap-2 flex-wrap">
             <button onclick="openEditModal('${a.id}','${esc(a.title)}')"
               class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-lg hover:bg-indigo-100">Edit</button>
             <button onclick="toggleHide('${a.id}', ${a.is_hidden})"
-              class="text-xs ${a.is_hidden ? 'bg-green-50 text-green-700 hover:bg-green-100' : 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100'} px-3 py-1 rounded-lg">
-              ${a.is_hidden ? 'Unban' : 'Ban'}
+              class="text-xs ${a.is_hidden ? "bg-green-50 text-green-700 hover:bg-green-100" : "bg-yellow-50 text-yellow-700 hover:bg-yellow-100"} px-3 py-1 rounded-lg">
+              ${a.is_hidden ? "Unban" : "Ban"}
             </button>
             <button onclick="toggleApprove('${a.id}', ${a.approved})"
-              class="text-xs ${a.approved ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'} px-3 py-1 rounded-lg">
-              ${a.approved ? 'Unpublish' : 'Publish'}
+              class="text-xs ${a.approved ? "bg-red-50 text-red-600 hover:bg-red-100" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"} px-3 py-1 rounded-lg">
+              ${a.approved ? "Unpublish" : "Publish"}
             </button>
           </td>
         </tr>
-      `).join('');
-    }
-
-    function renderUsers(users) {
-      const tbody = document.getElementById('users-tbody');
-      if (!users.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">No users found.</td></tr>';
-        return;
+      `,
+          )
+          .join("");
       }
-      tbody.innerHTML = users.map(u => {
-        const s = studMap[u.pyccode];
-        const clsNum = s ? `${s.cls} · ${s.num}` : '—';
-        const name   = s ? s.userename : (u.name || u.pyccode);
-        return `
-        <tr class="border-t hover:bg-gray-50 ${u.is_banned ? 'opacity-60' : ''}">
+
+      function renderUsers(users) {
+        const tbody = document.getElementById("users-tbody");
+        if (!users.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="7" class="text-center py-8 text-gray-400">No users found.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = users
+          .map((u) => {
+            const s = studMap[u.pyccode];
+            const clsNum = s ? `${s.cls} · ${s.num}` : "—";
+            const name = s ? s.userename : u.name || u.pyccode;
+            return `
+        <tr class="border-t hover:bg-gray-50 ${u.is_banned ? "opacity-60" : ""}">
           <td class="px-4 py-3 font-mono text-xs">${esc(u.pyccode)}</td>
           <td class="px-4 py-3">${esc(name)}</td>
           <td class="px-4 py-3 text-gray-500 text-xs">${esc(clsNum)}</td>
           <td class="px-4 py-3 text-gray-500 text-xs">${esc(u.email)}</td>
           <td class="px-4 py-3">
-            <span class="text-xs ${u.role === 'teacher' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'} px-2 py-0.5 rounded-full">
-              ${u.role === 'teacher' ? 'Teacher' : 'Student'}
+            <span class="text-xs ${u.role === "teacher" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"} px-2 py-0.5 rounded-full">
+              ${u.role === "teacher" ? "Teacher" : "Student"}
             </span>
           </td>
           <td class="px-4 py-3">
-            ${u.is_banned
-              ? '<span class="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">Banned</span>'
-              : '<span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">Active</span>'}
+            ${
+              u.is_banned
+                ? '<span class="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">Banned</span>'
+                : '<span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">Active</span>'
+            }
           </td>
           <td class="px-4 py-3 flex gap-2 flex-wrap">
             <button onclick="toggleBan('${u.id}', ${u.is_banned})"
-              class="text-xs ${u.is_banned ? 'bg-green-50 text-green-700 hover:bg-green-100' : 'bg-red-50 text-red-600 hover:bg-red-100'} px-3 py-1 rounded-lg">
-              ${u.is_banned ? 'Unban' : 'Ban'}
+              class="text-xs ${u.is_banned ? "bg-green-50 text-green-700 hover:bg-green-100" : "bg-red-50 text-red-600 hover:bg-red-100"} px-3 py-1 rounded-lg">
+              ${u.is_banned ? "Unban" : "Ban"}
             </button>
-            ${isSuperAdmin && u.pyccode !== 'lkh1' ? `
+            ${
+              isSuperAdmin && u.pyccode !== "lkh1"
+                ? `
             <button onclick="toggleRole('${u.id}', '${u.role}')"
-              class="text-xs ${u.role === 'teacher' ? 'bg-orange-50 text-orange-700 hover:bg-orange-100' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'} px-3 py-1 rounded-lg">
-              ${u.role === 'teacher' ? 'Demote' : 'Promote'}
-            </button>` : ''}
+              class="text-xs ${u.role === "teacher" ? "bg-orange-50 text-orange-700 hover:bg-orange-100" : "bg-purple-50 text-purple-700 hover:bg-purple-100"} px-3 py-1 rounded-lg">
+              ${u.role === "teacher" ? "Demote" : "Promote"}
+            </button>`
+                : ""
+            }
           </td>
         </tr>`;
-      }).join('');
-    }
-
-    function getAllStudentsSorted() {
-      return Object.values(studMap).sort((a, b) => {
-        const clsCmp = a.cls.localeCompare(b.cls);
-        if (clsCmp !== 0) return clsCmp;
-        return parseInt(a.num, 10) - parseInt(b.num, 10);
-      });
-    }
-
-    function filterStudents() {
-      const q = document.getElementById('search-students').value.toLowerCase();
-      const all = getAllStudentsSorted();
-      renderStudents(q ? all.filter(s =>
-        s.pyccode.toLowerCase().includes(q) ||
-        s.userename.toLowerCase().includes(q) ||
-        s.cls.toLowerCase().includes(q)
-      ) : all);
-    }
-
-    function renderStudents(studs) {
-      const tbody = document.getElementById('students-tbody');
-      if (!studs.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400">No students found.</td></tr>';
-        return;
+          })
+          .join("");
       }
-      tbody.innerHTML = studs.map(s => {
-        const count = allApps.filter(a => a.owner_pyccode === s.pyccode).length;
-        return `
+
+      function getAllStudentsSorted() {
+        return Object.values(studMap).sort((a, b) => {
+          const clsCmp = a.cls.localeCompare(b.cls);
+          if (clsCmp !== 0) return clsCmp;
+          return parseInt(a.num, 10) - parseInt(b.num, 10);
+        });
+      }
+
+      function filterStudents() {
+        const q = document
+          .getElementById("search-students")
+          .value.toLowerCase();
+        const all = getAllStudentsSorted();
+        renderStudents(
+          q
+            ? all.filter(
+                (s) =>
+                  s.pyccode.toLowerCase().includes(q) ||
+                  s.userename.toLowerCase().includes(q) ||
+                  s.cls.toLowerCase().includes(q),
+              )
+            : all,
+        );
+      }
+
+      function renderStudents(studs) {
+        const tbody = document.getElementById("students-tbody");
+        if (!studs.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="5" class="text-center py-8 text-gray-400">No students found.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = studs
+          .map((s) => {
+            const count = allApps.filter(
+              (a) => a.owner_pyccode === s.pyccode,
+            ).length;
+            return `
         <tr class="border-t hover:bg-gray-50">
           <td class="px-4 py-3 font-mono text-xs">${esc(s.pyccode)}</td>
           <td class="px-4 py-3 text-gray-600">${esc(s.cls)}</td>
@@ -397,207 +618,292 @@
             <button onclick="showStudentApps('${esc(s.pyccode)}')"
               class="text-indigo-600 hover:underline font-medium">${esc(s.userename)}</button>
           </td>
-          <td class="px-4 py-3 text-gray-600">${count || '—'}</td>
+          <td class="px-4 py-3 text-gray-600">${count || "—"}</td>
         </tr>`;
-      }).join('');
-    }
+          })
+          .join("");
+      }
 
-    function showStudentApps(pyccode) {
-      currentModalPyccode = pyccode;
-      const s = studMap[pyccode];
-      document.getElementById('student-modal-name').textContent =
-        s ? `${s.cls} ${s.num} ${s.userename}` : (allUsers.find(u => u.pyccode === pyccode)?.name || pyccode);
-      const studentApps = allApps.filter(a => a.owner_pyccode === pyccode);
-      const list = document.getElementById('student-apps-list');
-      if (!studentApps.length) {
-        list.innerHTML = '<p class="text-gray-400 text-sm text-center py-8">No apps yet.</p>';
-      } else {
-        list.innerHTML = studentApps.map(a => `
+      function showStudentApps(pyccode) {
+        currentModalPyccode = pyccode;
+        const s = studMap[pyccode];
+        document.getElementById("student-modal-name").textContent = s
+          ? `${s.cls} ${s.num} ${s.userename}`
+          : allUsers.find((u) => u.pyccode === pyccode)?.name || pyccode;
+        const studentApps = allApps.filter((a) => a.owner_pyccode === pyccode);
+        const list = document.getElementById("student-apps-list");
+        if (!studentApps.length) {
+          list.innerHTML =
+            '<p class="text-gray-400 text-sm text-center py-8">No apps yet.</p>';
+        } else {
+          list.innerHTML = studentApps
+            .map(
+              (a) => `
           <div class="flex items-start justify-between py-3 border-b last:border-0 gap-3">
             <div class="min-w-0 flex-1">
               <a href="/${esc(a.owner_pyccode)}/${esc(a.slug)}" target="_blank"
                 class="text-sm font-medium text-indigo-600 hover:underline block truncate">${esc(a.title)}</a>
               <p class="text-xs text-gray-400">/${esc(a.owner_pyccode)}/${esc(a.slug)}</p>
               <div class="flex gap-1 mt-1">
-                ${a.is_hidden
-                  ? '<span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">Hidden</span>'
-                  : '<span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">Public</span>'}
-                ${a.approved ? '<span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full">Shelf</span>' : ''}
+                ${
+                  a.is_hidden
+                    ? '<span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">Hidden</span>'
+                    : '<span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">Public</span>'
+                }
+                ${a.approved ? '<span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full">Shelf</span>' : ""}
               </div>
             </div>
             <div class="flex flex-col gap-1 shrink-0">
               <button onclick="toggleHide('${a.id}', ${a.is_hidden})"
-                class="text-xs ${a.is_hidden ? 'bg-green-50 text-green-700 hover:bg-green-100' : 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100'} px-3 py-1 rounded-lg">
-                ${a.is_hidden ? 'Unban' : 'Ban'}
+                class="text-xs ${a.is_hidden ? "bg-green-50 text-green-700 hover:bg-green-100" : "bg-yellow-50 text-yellow-700 hover:bg-yellow-100"} px-3 py-1 rounded-lg">
+                ${a.is_hidden ? "Unban" : "Ban"}
               </button>
               <button onclick="toggleApprove('${a.id}', ${a.approved})"
-                class="text-xs ${a.approved ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'} px-3 py-1 rounded-lg">
-                ${a.approved ? 'Unpublish' : 'Publish'}
+                class="text-xs ${a.approved ? "bg-red-50 text-red-600 hover:bg-red-100" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"} px-3 py-1 rounded-lg">
+                ${a.approved ? "Unpublish" : "Publish"}
               </button>
             </div>
-          </div>`).join('');
+          </div>`,
+            )
+            .join("");
+        }
+        document.getElementById("student-modal").classList.remove("hidden");
       }
-      document.getElementById('student-modal').classList.remove('hidden');
-    }
 
-    function getTeachers() {
-      return allUsers.filter(u => u.role === 'teacher')
-        .sort((a, b) => (a.pyccode || '').localeCompare(b.pyccode || ''));
-    }
-
-    function filterTeachers() {
-      const q = document.getElementById('search-teachers').value.toLowerCase();
-      const all = getTeachers();
-      renderTeachers(q ? all.filter(u =>
-        (u.pyccode || '').toLowerCase().includes(q) ||
-        (u.name || '').toLowerCase().includes(q) ||
-        (u.email || '').toLowerCase().includes(q)
-      ) : all);
-    }
-
-    function renderTeachers(teachers) {
-      const tbody = document.getElementById('teachers-tbody');
-      if (!teachers.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-400">No teachers found.</td></tr>';
-        return;
+      function getTeachers() {
+        return allUsers
+          .filter((u) => u.role === "teacher")
+          .sort((a, b) => (a.pyccode || "").localeCompare(b.pyccode || ""));
       }
-      tbody.innerHTML = teachers.map(u => {
-        const count = allApps.filter(a => a.owner_pyccode === u.pyccode).length;
-        const name  = u.name || u.pyccode;
-        return `
+
+      function filterTeachers() {
+        const q = document
+          .getElementById("search-teachers")
+          .value.toLowerCase();
+        const all = getTeachers();
+        renderTeachers(
+          q
+            ? all.filter(
+                (u) =>
+                  (u.pyccode || "").toLowerCase().includes(q) ||
+                  (u.name || "").toLowerCase().includes(q) ||
+                  (u.email || "").toLowerCase().includes(q),
+              )
+            : all,
+        );
+      }
+
+      function renderTeachers(teachers) {
+        const tbody = document.getElementById("teachers-tbody");
+        if (!teachers.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="4" class="text-center py-8 text-gray-400">No teachers found.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = teachers
+          .map((u) => {
+            const count = allApps.filter(
+              (a) => a.owner_pyccode === u.pyccode,
+            ).length;
+            const name = u.name || u.pyccode;
+            return `
         <tr class="border-t hover:bg-gray-50">
           <td class="px-4 py-3 font-mono text-xs">${esc(u.pyccode)}</td>
           <td class="px-4 py-3">
             <button onclick="showStudentApps('${esc(u.pyccode)}')"
               class="text-indigo-600 hover:underline font-medium">${esc(name)}</button>
           </td>
-          <td class="px-4 py-3 text-gray-500 text-xs">${esc(u.email || '—')}</td>
-          <td class="px-4 py-3 text-gray-600">${count || '—'}</td>
+          <td class="px-4 py-3 text-gray-500 text-xs">${esc(u.email || "—")}</td>
+          <td class="px-4 py-3 text-gray-600">${count || "—"}</td>
         </tr>`;
-      }).join('');
-    }
-
-    async function toggleHide(id, currentlyHidden) {
-      const res = await fetch(`/admin/api/apps/${id}/hide`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hidden: !currentlyHidden })
-      });
-      if (res.ok) { const a = allApps.find(a => a.id === id); if (a) a.is_hidden = !currentlyHidden; renderApps(allApps); if (currentModalPyccode) showStudentApps(currentModalPyccode); }
-    }
-
-    async function toggleApprove(id, currentlyApproved) {
-      const res = await fetch(`/admin/api/apps/${id}/approve`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approved: !currentlyApproved })
-      });
-      if (res.ok) { const a = allApps.find(a => a.id === id); if (a) a.approved = !currentlyApproved; renderApps(allApps); if (currentModalPyccode) showStudentApps(currentModalPyccode); }
-    }
-
-    async function toggleRole(id, currentRole) {
-      const newRole = currentRole === 'teacher' ? 'student' : 'teacher';
-      const action  = newRole === 'teacher' ? 'promote to teacher' : 'demote to student';
-      if (!confirm(`Are you sure you want to ${action} this user?`)) return;
-      const res = await fetch(`/admin/api/users/${id}/role`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: newRole })
-      });
-      if (res.ok) { const u = allUsers.find(u => u.id === id); if (u) u.role = newRole; renderUsers(allUsers); }
-      else { const d = await res.json(); alert(d.error || 'Failed to update role.'); }
-    }
-
-    async function toggleBan(id, currentlyBanned) {
-      if (!confirm(`${currentlyBanned ? 'Unban' : 'Ban'} this user?`)) return;
-      const res = await fetch(`/admin/api/users/${id}/ban`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ banned: !currentlyBanned })
-      });
-      if (res.ok) { const u = allUsers.find(u => u.id === id); if (u) u.is_banned = !currentlyBanned; renderUsers(allUsers); }
-    }
-
-    function getSelectedCategories() {
-      return tsEditCategory ? tsEditCategory.getValue() : [];
-    }
-
-    function openEditModal(id, title) {
-      editAppId = id;
-      document.getElementById('edit-title').value = title;
-      document.getElementById('edit-error').classList.add('hidden');
-      document.getElementById('edit-modal').classList.remove('hidden');
-      if (!editEditor) {
-        editEditor = CodeMirror.fromTextArea(document.getElementById('edit-code'), {
-          mode: 'htmlmixed', theme: 'dracula', lineNumbers: true, tabSize: 2,
-        });
+          })
+          .join("");
       }
-      // Use admin endpoint — no ownership restriction
-      fetch(`/admin/api/apps/${id}`).then(r => r.json()).then(app => {
-        editEditor.setValue(app.html_content);
-        editEditor.clearHistory();
-        if (tsEditCategory) tsEditCategory.destroy();
-        const allCats = [...new Set(allApps.flatMap(a => Array.isArray(a.category) ? a.category : []).filter(Boolean))];
-        const thisCats = app.category || [];
-        const optionValues = [...new Set([...allCats, ...thisCats])];
-        tsEditCategory = new TomSelect('#edit-category', {
-          create: true,
-          plugins: ['remove_button'],
-          options: optionValues.map(c => ({ value: c, text: c })),
-          items: thisCats,
-          createOnBlur: true,
-          persist: false,
+
+      async function toggleHide(id, currentlyHidden) {
+        const res = await fetch(`/admin/api/apps/${id}/hide`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ hidden: !currentlyHidden }),
         });
-      });
-    }
-
-    function closeEditModal() {
-      document.getElementById('edit-modal').classList.add('hidden');
-      editAppId = null;
-    }
-
-    async function saveEdit() {
-      const title  = document.getElementById('edit-title').value.trim();
-      const html   = editEditor.getValue();
-      const errEl  = document.getElementById('edit-error');
-      if (!title) { errEl.textContent = 'Title is required.'; errEl.classList.remove('hidden'); return; }
-      const res = await fetch(`/admin/api/apps/${editAppId}/content`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description: '', html_content: html, category: getSelectedCategories() })
-      });
-      if (res.ok) {
-        const a = allApps.find(a => a.id === editAppId);
-        if (a) { a.title = title; a.category = getSelectedCategories(); }
-        renderApps(allApps);
-        closeEditModal();
-      } else {
-        const d = await res.json();
-        errEl.textContent = d.error || 'Save failed.';
-        errEl.classList.remove('hidden');
+        if (res.ok) {
+          const a = allApps.find((a) => a.id === id);
+          if (a) a.is_hidden = !currentlyHidden;
+          renderApps(allApps);
+          if (currentModalPyccode) showStudentApps(currentModalPyccode);
+        }
       }
-    }
 
-    function toggleProfile() {
-      document.getElementById('profile-dropdown').classList.toggle('hidden');
-    }
-    document.addEventListener('click', e => {
-      const m = document.getElementById('profile-menu');
-      if (m && !m.contains(e.target)) document.getElementById('profile-dropdown').classList.add('hidden');
-    });
-    function setProfileUI(me) {
-      const av = me.avatar_url || '';
-      ['nav-avatar', 'dd-avatar'].forEach(id => { const el = document.getElementById(id); if (el) el.src = av; });
-      document.getElementById('dd-name').textContent = me.name || me.display_name || me.pyccode;
-      document.getElementById('dd-email').textContent = me.email || '';
-      const t = me.app_count || 0, s = me.shelf_count || 0;
-      document.getElementById('dd-stats').textContent = `${t} app${t !== 1 ? 's' : ''} · ${s} on shelf`;
-    }
+      async function toggleApprove(id, currentlyApproved) {
+        const res = await fetch(`/admin/api/apps/${id}/approve`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ approved: !currentlyApproved }),
+        });
+        if (res.ok) {
+          const a = allApps.find((a) => a.id === id);
+          if (a) a.approved = !currentlyApproved;
+          renderApps(allApps);
+          if (currentModalPyccode) showStudentApps(currentModalPyccode);
+        }
+      }
 
-    async function logout() { await fetch('/auth/logout', { method: 'POST' }); location.href = '/'; }
-    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+      async function toggleRole(id, currentRole) {
+        const newRole = currentRole === "teacher" ? "student" : "teacher";
+        const action =
+          newRole === "teacher" ? "promote to teacher" : "demote to student";
+        if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+        const res = await fetch(`/admin/api/users/${id}/role`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role: newRole }),
+        });
+        if (res.ok) {
+          const u = allUsers.find((u) => u.id === id);
+          if (u) u.role = newRole;
+          renderUsers(allUsers);
+        } else {
+          const d = await res.json();
+          alert(d.error || "Failed to update role.");
+        }
+      }
 
-    init();
-  </script>
-</body>
+      async function toggleBan(id, currentlyBanned) {
+        if (!confirm(`${currentlyBanned ? "Unban" : "Ban"} this user?`)) return;
+        const res = await fetch(`/admin/api/users/${id}/ban`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ banned: !currentlyBanned }),
+        });
+        if (res.ok) {
+          const u = allUsers.find((u) => u.id === id);
+          if (u) u.is_banned = !currentlyBanned;
+          renderUsers(allUsers);
+        }
+      }
+
+      function getSelectedCategories() {
+        return tsEditCategory ? tsEditCategory.getValue() : [];
+      }
+
+      function openEditModal(id, title) {
+        editAppId = id;
+        document.getElementById("edit-title").value = title;
+        document.getElementById("edit-error").classList.add("hidden");
+        document.getElementById("edit-modal").classList.remove("hidden");
+        if (!editEditor) {
+          editEditor = CodeMirror.fromTextArea(
+            document.getElementById("edit-code"),
+            {
+              mode: "htmlmixed",
+              theme: "dracula",
+              lineNumbers: true,
+              tabSize: 2,
+            },
+          );
+        }
+        // Use admin endpoint — no ownership restriction
+        fetch(`/admin/api/apps/${id}`)
+          .then((r) => r.json())
+          .then((app) => {
+            editEditor.setValue(app.html_content);
+            editEditor.clearHistory();
+            if (tsEditCategory) tsEditCategory.destroy();
+            const allCats = [
+              ...new Set(
+                allApps
+                  .flatMap((a) => (Array.isArray(a.category) ? a.category : []))
+                  .filter(Boolean),
+              ),
+            ];
+            const thisCats = app.category || [];
+            const optionValues = [...new Set([...allCats, ...thisCats])];
+            tsEditCategory = new TomSelect("#edit-category", {
+              create: true,
+              plugins: ["remove_button"],
+              options: optionValues.map((c) => ({ value: c, text: c })),
+              items: thisCats,
+              createOnBlur: true,
+              persist: false,
+            });
+          });
+      }
+
+      function closeEditModal() {
+        document.getElementById("edit-modal").classList.add("hidden");
+        editAppId = null;
+      }
+
+      async function saveEdit() {
+        const title = document.getElementById("edit-title").value.trim();
+        const html = editEditor.getValue();
+        const errEl = document.getElementById("edit-error");
+        if (!title) {
+          errEl.textContent = "Title is required.";
+          errEl.classList.remove("hidden");
+          return;
+        }
+        const res = await fetch(`/admin/api/apps/${editAppId}/content`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            description: "",
+            html_content: html,
+            category: getSelectedCategories(),
+          }),
+        });
+        if (res.ok) {
+          const a = allApps.find((a) => a.id === editAppId);
+          if (a) {
+            a.title = title;
+            a.category = getSelectedCategories();
+          }
+          renderApps(allApps);
+          closeEditModal();
+        } else {
+          const d = await res.json();
+          errEl.textContent = d.error || "Save failed.";
+          errEl.classList.remove("hidden");
+        }
+      }
+
+      function toggleProfile() {
+        document.getElementById("profile-dropdown").classList.toggle("hidden");
+      }
+      document.addEventListener("click", (e) => {
+        const m = document.getElementById("profile-menu");
+        if (m && !m.contains(e.target))
+          document.getElementById("profile-dropdown").classList.add("hidden");
+      });
+      function setProfileUI(me) {
+        const av = me.avatar_url || "";
+        ["nav-avatar", "dd-avatar"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.src = av;
+        });
+        document.getElementById("dd-name").textContent =
+          me.name || me.display_name || me.pyccode;
+        document.getElementById("dd-email").textContent = me.email || "";
+        const t = me.app_count || 0,
+          s = me.shelf_count || 0;
+        document.getElementById("dd-stats").textContent =
+          `${t} app${t !== 1 ? "s" : ""} · ${s} on shelf`;
+      }
+
+      async function logout() {
+        await fetch("/auth/logout", { method: "POST" });
+        location.href = "/";
+      }
+      function esc(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      init();
+    </script>
+  </body>
 </html>

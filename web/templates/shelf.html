@@ -1,166 +1,249 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reploy — Shelf</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50 min-h-screen">
-
-  <nav class="bg-white border-b px-6 py-3 flex items-center justify-between">
-    <span class="text-indigo-600 font-bold text-xl">Reploy</span>
-    <div class="flex gap-4 items-center">
-      <a href="/dashboard" class="text-sm text-indigo-600 hover:underline">My Apps</a>
-      <a href="/shelf" class="text-sm font-medium text-indigo-700 underline">Shelf</a>
-      <a id="admin-link" href="/admin" class="hidden text-sm text-indigo-600 hover:underline">Admin Panel</a>
-      <div class="relative" id="profile-menu">
-        <button onclick="toggleProfile()" class="focus:outline-none">
-          <img id="nav-avatar" src="" alt="" class="w-8 h-8 rounded-full object-cover border border-gray-200 hover:ring-2 hover:ring-gray-300 transition" />
-        </button>
-        <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
-          <div class="px-4 py-4 border-b border-gray-100">
-            <div class="flex items-center gap-3 mb-2">
-              <img id="dd-avatar" src="" alt="" class="w-10 h-10 rounded-full object-cover shrink-0" />
-              <div class="min-w-0">
-                <p id="dd-name" class="text-sm font-medium text-gray-800 truncate"></p>
-                <p id="dd-email" class="text-xs text-gray-400 truncate"></p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reploy — Shelf</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white border-b px-6 py-3 flex items-center justify-between">
+      <span class="text-indigo-600 font-bold text-xl">Reploy</span>
+      <div class="flex gap-4 items-center">
+        <a href="/dashboard" class="text-sm text-indigo-600 hover:underline"
+          >My Apps</a
+        >
+        <a href="/shelf" class="text-sm font-medium text-indigo-700 underline"
+          >Shelf</a
+        >
+        <a
+          id="admin-link"
+          href="/admin"
+          class="hidden text-sm text-indigo-600 hover:underline"
+          >Admin Panel</a
+        >
+        <div class="relative mt-2" id="profile-menu">
+          <button onclick="toggleProfile()" class="focus:outline-none">
+            <img
+              id="nav-avatar"
+              src=""
+              alt=""
+              class="w-8 h-8 rounded-full object-cover border border-gray-200 hover:ring-2 hover:ring-gray-300 transition"
+            />
+          </button>
+          <div
+            id="profile-dropdown"
+            class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
+          >
+            <div class="px-4 py-4 border-b border-gray-100">
+              <div class="flex items-center gap-3 mb-2">
+                <img
+                  id="dd-avatar"
+                  src=""
+                  alt=""
+                  class="w-10 h-10 rounded-full object-cover shrink-0"
+                />
+                <div class="min-w-0">
+                  <p
+                    id="dd-name"
+                    class="text-sm font-medium text-gray-800 truncate"
+                  ></p>
+                  <p id="dd-email" class="text-xs text-gray-400 truncate"></p>
+                </div>
               </div>
+              <p id="dd-stats" class="text-xs text-gray-400"></p>
             </div>
-            <p id="dd-stats" class="text-xs text-gray-400"></p>
+            <button
+              onclick="logout()"
+              class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-50 transition"
+            >
+              Sign Out
+            </button>
           </div>
-          <button onclick="logout()" class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-50 transition">Sign Out</button>
         </div>
       </div>
-    </div>
-  </nav>
+    </nav>
 
-  <main class="max-w-6xl mx-auto px-4 py-6">
-    <div class="flex items-center justify-between gap-4 mb-4">
-      <div>
-        <h1 class="text-xl font-bold text-gray-800">App Shelf</h1>
-        <p class="text-xs text-gray-400 mt-0.5">Approved apps from everyone</p>
+    <main class="max-w-6xl mx-auto px-4 py-6">
+      <div class="flex items-center justify-between gap-4 mb-4">
+        <div>
+          <h1 class="text-xl font-bold text-gray-800">App Shelf</h1>
+          <p class="text-xs text-gray-400 mt-0.5">
+            Approved apps from everyone
+          </p>
+        </div>
+        <input
+          id="search"
+          type="text"
+          placeholder="Search…"
+          oninput="applyFilters()"
+          class="border rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+        />
       </div>
-      <input id="search" type="text" placeholder="Search…" oninput="applyFilters()"
-        class="border rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-    </div>
 
-    <div id="cat-buttons" class="flex flex-wrap gap-2 mb-5">
-      <!-- rendered by JS -->
-    </div>
+      <div id="cat-buttons" class="flex flex-wrap gap-2 mb-5">
+        <!-- rendered by JS -->
+      </div>
 
-    <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-      <div class="col-span-full text-center py-16 text-gray-400">Loading…</div>
-    </div>
-  </main>
+      <div
+        id="grid"
+        class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2"
+      >
+        <div class="col-span-full text-center py-16 text-gray-400">
+          Loading…
+        </div>
+      </div>
+    </main>
 
-  <script>
-    let allApps = [], studMap = {}, allCats = [], activeCat = 'Education';
+    <script>
+      let allApps = [],
+        studMap = {},
+        allCats = [],
+        activeCat = "Education";
 
-    async function init() {
-      const me = await fetch('/api/me').then(r => r.json());
-      if (me.role === 'teacher') document.getElementById('admin-link').classList.remove('hidden');
-      setProfileUI(me);
+      async function init() {
+        const me = await fetch("/api/me").then((r) => r.json());
+        if (me.role === "teacher")
+          document.getElementById("admin-link").classList.remove("hidden");
+        setProfileUI(me);
 
-      try {
-        const studs = await fetch('https://www5.pyc.edu.hk/pycnet/api/stud_list.php').then(r => r.json());
-        studs.forEach(s => { studMap[s.pyccode] = s; });
-      } catch(e) {}
+        try {
+          const studs = await fetch(
+            "https://www5.pyc.edu.hk/pycnet/api/stud_list.php",
+          ).then((r) => r.json());
+          studs.forEach((s) => {
+            studMap[s.pyccode] = s;
+          });
+        } catch (e) {}
 
-      const apps = await fetch('/api/shelf').then(r => r.json());
-      allApps = apps || [];
-      buildCategoryButtons(allApps);
-      applyFilters();
-    }
+        const apps = await fetch("/api/shelf").then((r) => r.json());
+        allApps = apps || [];
+        buildCategoryButtons(allApps);
+        applyFilters();
+      }
 
-    function displayName(pyccode) {
-      const s = studMap[pyccode];
-      return s ? `${s.cls} ${s.num} ${s.userename}` : pyccode;
-    }
+      function displayName(pyccode) {
+        const s = studMap[pyccode];
+        return s ? `${s.cls} ${s.num} ${s.userename}` : pyccode;
+      }
 
-    function buildCategoryButtons(apps) {
-      const catSet = [...new Set(apps.flatMap(a => Array.isArray(a.category) ? a.category : []).filter(Boolean))];
-      allCats = catSet.sort((a, b) => a.localeCompare(b));
-      activeCat = allCats.includes('Education') ? 'Education' : (allCats[0] || '');
-      renderCatButtons();
-    }
+      function buildCategoryButtons(apps) {
+        const catSet = [
+          ...new Set(
+            apps
+              .flatMap((a) => (Array.isArray(a.category) ? a.category : []))
+              .filter(Boolean),
+          ),
+        ];
+        allCats = catSet.sort((a, b) => a.localeCompare(b));
+        activeCat = allCats.includes("Education")
+          ? "Education"
+          : allCats[0] || "";
+        renderCatButtons();
+      }
 
-    function renderCatButtons() {
-      const options = ['All', ...allCats];
-      document.getElementById('cat-buttons').innerHTML = options.map(c => {
-        const active = (c === 'All' && activeCat === '') || c === activeCat;
-        return `<button onclick="selectCat('${esc(c)}')"
-          class="px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${active
-            ? 'bg-indigo-600 text-white border-indigo-600'
-            : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600'}">
+      function renderCatButtons() {
+        const options = ["All", ...allCats];
+        document.getElementById("cat-buttons").innerHTML = options
+          .map((c) => {
+            const active = (c === "All" && activeCat === "") || c === activeCat;
+            return `<button onclick="selectCat('${esc(c)}')"
+          class="px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+            active
+              ? "bg-indigo-600 text-white border-indigo-600"
+              : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600"
+          }">
           ${esc(c)}
         </button>`;
-      }).join('');
-    }
-
-    function selectCat(cat) {
-      activeCat = cat === 'All' ? '' : cat;
-      renderCatButtons();
-      applyFilters();
-    }
-
-    function applyFilters() {
-      const q = document.getElementById('search').value.toLowerCase();
-      const filtered = allApps.filter(a => {
-        const matchQ   = !q || a.title.toLowerCase().includes(q) || (a.owner_pyccode || '').toLowerCase().includes(q);
-        const matchCat = !activeCat || (Array.isArray(a.category) && a.category.includes(activeCat));
-        return matchQ && matchCat;
-      });
-      render(filtered);
-    }
-
-    function render(apps) {
-      const grid = document.getElementById('grid');
-      if (!apps.length) {
-        grid.innerHTML = '<div class="col-span-full text-center py-16 text-gray-400">No apps found.</div>';
-        return;
+          })
+          .join("");
       }
-      grid.innerHTML = apps.map(a => {
-        const author = displayName(a.owner_pyccode || '');
-        const url    = `/${esc(a.owner_pyccode)}/${esc(a.slug)}`;
-        return `
+
+      function selectCat(cat) {
+        activeCat = cat === "All" ? "" : cat;
+        renderCatButtons();
+        applyFilters();
+      }
+
+      function applyFilters() {
+        const q = document.getElementById("search").value.toLowerCase();
+        const filtered = allApps.filter((a) => {
+          const matchQ =
+            !q ||
+            a.title.toLowerCase().includes(q) ||
+            (a.owner_pyccode || "").toLowerCase().includes(q);
+          const matchCat =
+            !activeCat ||
+            (Array.isArray(a.category) && a.category.includes(activeCat));
+          return matchQ && matchCat;
+        });
+        render(filtered);
+      }
+
+      function render(apps) {
+        const grid = document.getElementById("grid");
+        if (!apps.length) {
+          grid.innerHTML =
+            '<div class="col-span-full text-center py-16 text-gray-400">No apps found.</div>';
+          return;
+        }
+        grid.innerHTML = apps
+          .map((a) => {
+            const author = displayName(a.owner_pyccode || "");
+            const url = `/${esc(a.owner_pyccode)}/${esc(a.slug)}`;
+            return `
         <div class="bg-white rounded-lg border hover:shadow-md transition p-3 flex flex-col gap-2">
           <div class="flex-1 min-w-0">
             <h3 class="font-semibold text-gray-800 text-sm leading-tight truncate">${esc(a.title)}</h3>
             <p class="text-xs text-gray-400 truncate mt-0.5">${esc(author)}</p>
-            ${a.description ? `<p class="text-xs text-gray-500 line-clamp-2 mt-1">${esc(a.description)}</p>` : ''}
+            ${a.description ? `<p class="text-xs text-gray-500 line-clamp-2 mt-1">${esc(a.description)}</p>` : ""}
           </div>
           <a href="${url}" target="_blank"
             class="block text-center text-xs bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 rounded-md font-medium transition">
             Open
           </a>
         </div>`;
-      }).join('');
-    }
+          })
+          .join("");
+      }
 
-    function esc(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
+      function esc(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
 
-    function toggleProfile() {
-      document.getElementById('profile-dropdown').classList.toggle('hidden');
-    }
-    document.addEventListener('click', e => {
-      const m = document.getElementById('profile-menu');
-      if (m && !m.contains(e.target)) document.getElementById('profile-dropdown').classList.add('hidden');
-    });
-    function setProfileUI(me) {
-      const av = me.avatar_url || '';
-      ['nav-avatar', 'dd-avatar'].forEach(id => { const el = document.getElementById(id); if (el) el.src = av; });
-      document.getElementById('dd-name').textContent = me.name || me.display_name || me.pyccode;
-      document.getElementById('dd-email').textContent = me.email || '';
-      const t = me.app_count || 0, s = me.shelf_count || 0;
-      document.getElementById('dd-stats').textContent = `${t} app${t !== 1 ? 's' : ''} · ${s} on shelf`;
-    }
+      function toggleProfile() {
+        document.getElementById("profile-dropdown").classList.toggle("hidden");
+      }
+      document.addEventListener("click", (e) => {
+        const m = document.getElementById("profile-menu");
+        if (m && !m.contains(e.target))
+          document.getElementById("profile-dropdown").classList.add("hidden");
+      });
+      function setProfileUI(me) {
+        const av = me.avatar_url || "";
+        ["nav-avatar", "dd-avatar"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.src = av;
+        });
+        document.getElementById("dd-name").textContent =
+          me.name || me.display_name || me.pyccode;
+        document.getElementById("dd-email").textContent = me.email || "";
+        const t = me.app_count || 0,
+          s = me.shelf_count || 0;
+        document.getElementById("dd-stats").textContent =
+          `${t} app${t !== 1 ? "s" : ""} · ${s} on shelf`;
+      }
 
-    async function logout() { await fetch('/auth/logout', { method: 'POST' }); location.href = '/'; }
+      async function logout() {
+        await fetch("/auth/logout", { method: "POST" });
+        location.href = "/";
+      }
 
-    init();
-  </script>
-</body>
+      init();
+    </script>
+  </body>
 </html>

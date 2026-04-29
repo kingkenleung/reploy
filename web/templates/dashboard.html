@@ -1,105 +1,176 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reploy — My Apps</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50 min-h-screen">
-
-  <!-- Navbar -->
-  <nav class="bg-white border-b px-6 py-3 flex items-center justify-between">
-    <span class="text-indigo-600 font-bold text-xl">Reploy</span>
-    <div class="flex items-center gap-4">
-      <a href="/dashboard" class="text-sm font-medium text-indigo-700 underline">My Apps</a>
-      <a href="/shelf" class="text-sm text-indigo-600 hover:underline">Shelf</a>
-      <a id="admin-link" href="/admin" class="hidden text-sm text-indigo-600 hover:underline">Admin Panel</a>
-      <div class="relative" id="profile-menu">
-        <button onclick="toggleProfile()" class="focus:outline-none">
-          <img id="nav-avatar" src="" alt="" class="w-8 h-8 rounded-full object-cover border border-gray-200 hover:ring-2 hover:ring-gray-300 transition" />
-        </button>
-        <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
-          <div class="px-4 py-4 border-b border-gray-100">
-            <div class="flex items-center gap-3 mb-2">
-              <img id="dd-avatar" src="" alt="" class="w-10 h-10 rounded-full object-cover shrink-0" />
-              <div class="min-w-0">
-                <p id="dd-name" class="text-sm font-medium text-gray-800 truncate"></p>
-                <p id="dd-email" class="text-xs text-gray-400 truncate"></p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reploy — My Apps</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-white border-b px-6 py-3 flex items-center justify-between">
+      <span class="text-indigo-600 font-bold text-xl">Reploy</span>
+      <div class="flex items-center gap-4">
+        <a
+          href="/dashboard"
+          class="text-sm font-medium text-indigo-700 underline"
+          >My Apps</a
+        >
+        <a href="/shelf" class="text-sm text-indigo-600 hover:underline"
+          >Shelf</a
+        >
+        <a
+          id="admin-link"
+          href="/admin"
+          class="hidden text-sm text-indigo-600 hover:underline"
+          >Admin Panel</a
+        >
+        <div class="relative mt-2" id="profile-menu">
+          <button onclick="toggleProfile()" class="focus:outline-none">
+            <img
+              id="nav-avatar"
+              src=""
+              alt=""
+              class="w-8 h-8 rounded-full object-cover border border-gray-200 hover:ring-2 hover:ring-gray-300 transition"
+            />
+          </button>
+          <div
+            id="profile-dropdown"
+            class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
+          >
+            <div class="px-4 py-4 border-b border-gray-100">
+              <div class="flex items-center gap-3 mb-2">
+                <img
+                  id="dd-avatar"
+                  src=""
+                  alt=""
+                  class="w-10 h-10 rounded-full object-cover shrink-0"
+                />
+                <div class="min-w-0">
+                  <p
+                    id="dd-name"
+                    class="text-sm font-medium text-gray-800 truncate"
+                  ></p>
+                  <p id="dd-email" class="text-xs text-gray-400 truncate"></p>
+                </div>
               </div>
+              <p id="dd-stats" class="text-xs text-gray-400"></p>
             </div>
-            <p id="dd-stats" class="text-xs text-gray-400"></p>
+            <button
+              onclick="logout()"
+              class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-50 transition"
+            >
+              Sign Out
+            </button>
           </div>
-          <button onclick="logout()" class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-50 transition">Sign Out</button>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 py-8">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">My Apps</h1>
+        <button
+          onclick="openCreateModal()"
+          class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition"
+        >
+          + New App
+        </button>
+      </div>
+
+      <div id="app-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <p class="text-gray-400 col-span-2 text-center py-12" id="empty-msg">
+          Loading…
+        </p>
+      </div>
+    </main>
+
+    <!-- Create Modal -->
+    <div
+      id="create-modal"
+      class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4"
+    >
+      <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+        <h2 class="text-lg font-bold mb-4">New App</h2>
+        <label class="block text-sm text-gray-600 mb-1">Title</label>
+        <input
+          id="new-title"
+          type="text"
+          placeholder="My Cool App"
+          maxlength="80"
+          class="w-full border rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        />
+        <label class="block text-sm text-gray-600 mb-1"
+          >URL slug
+          <span class="text-gray-400"
+            >The URL will be reploy.spyc.hk/&lt;url_slug&gt;</span
+          ></label
+        >
+        <input
+          id="new-slug"
+          type="text"
+          placeholder="my-cool-app"
+          maxlength="60"
+          class="w-full border rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        />
+        <label class="block text-sm text-gray-600 mb-1"
+          >Description <span class="text-gray-400">(optional)</span></label
+        >
+        <input
+          id="new-desc"
+          type="text"
+          placeholder="A short description"
+          class="w-full border rounded-lg px-3 py-2 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        />
+        <p id="create-error" class="text-red-500 text-xs mb-3 hidden"></p>
+        <div class="flex gap-3 justify-end">
+          <button
+            onclick="closeCreateModal()"
+            class="text-sm text-gray-500 hover:underline"
+          >
+            Cancel
+          </button>
+          <button
+            onclick="createApp()"
+            class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700"
+          >
+            Create
+          </button>
         </div>
       </div>
     </div>
-  </nav>
 
-  <main class="max-w-4xl mx-auto px-4 py-8">
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">My Apps</h1>
-      <button onclick="openCreateModal()"
-        class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
-        + New App
-      </button>
-    </div>
+    <script>
+      let pyccode = "";
 
-    <div id="app-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <p class="text-gray-400 col-span-2 text-center py-12" id="empty-msg">Loading…</p>
-    </div>
-  </main>
-
-  <!-- Create Modal -->
-  <div id="create-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
-    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-      <h2 class="text-lg font-bold mb-4">New App</h2>
-      <label class="block text-sm text-gray-600 mb-1">Title</label>
-      <input id="new-title" type="text" placeholder="My Cool App" maxlength="80"
-        class="w-full border rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-      <label class="block text-sm text-gray-600 mb-1">URL slug <span class="text-gray-400">(lowercase letters, numbers, hyphens only)</span></label>
-      <input id="new-slug" type="text" placeholder="my-cool-app" maxlength="60"
-        class="w-full border rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-      <label class="block text-sm text-gray-600 mb-1">Description <span class="text-gray-400">(optional)</span></label>
-      <input id="new-desc" type="text" placeholder="A short description"
-        class="w-full border rounded-lg px-3 py-2 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-      <p id="create-error" class="text-red-500 text-xs mb-3 hidden"></p>
-      <div class="flex gap-3 justify-end">
-        <button onclick="closeCreateModal()" class="text-sm text-gray-500 hover:underline">Cancel</button>
-        <button onclick="createApp()"
-          class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">Create</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let pyccode = '';
-
-    async function init() {
-      const me = await fetch('/api/me').then(r => r.json());
-      pyccode = me.pyccode;
-      setProfileUI(me);
-      if (me.role === 'teacher') document.getElementById('admin-link').classList.remove('hidden');
-      loadApps();
-    }
-
-    async function loadApps() {
-      const apps = await fetch('/api/apps').then(r => r.json());
-      const list = document.getElementById('app-list');
-      const empty = document.getElementById('empty-msg');
-      if (!apps || apps.length === 0) {
-        empty.textContent = 'No apps yet — click "New App" to get started!';
-        return;
+      async function init() {
+        const me = await fetch("/api/me").then((r) => r.json());
+        pyccode = me.pyccode;
+        setProfileUI(me);
+        if (me.role === "teacher")
+          document.getElementById("admin-link").classList.remove("hidden");
+        loadApps();
       }
-      empty.remove();
-      list.innerHTML = apps.map(app => `
+
+      async function loadApps() {
+        const apps = await fetch("/api/apps").then((r) => r.json());
+        const list = document.getElementById("app-list");
+        const empty = document.getElementById("empty-msg");
+        if (!apps || apps.length === 0) {
+          empty.textContent = 'No apps yet — click "New App" to get started!';
+          return;
+        }
+        empty.remove();
+        list.innerHTML = apps
+          .map(
+            (app) => `
         <div class="bg-white rounded-xl border p-5 flex flex-col gap-3 shadow-sm hover:shadow-md transition">
           <div class="flex items-start justify-between">
             <div>
               <h3 class="font-semibold text-gray-800">${esc(app.title)}</h3>
-              <p class="text-xs text-gray-400 mt-0.5">${esc(app.description || '')}</p>
+              <p class="text-xs text-gray-400 mt-0.5">${esc(app.description || "")}</p>
             </div>
-            ${app.is_hidden ? '<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">Hidden</span>' : ''}
+            ${app.is_hidden ? '<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">Hidden</span>' : ""}
           </div>
           <div class="flex items-center gap-2 flex-wrap">
             <a href="/${pyccode}/${app.slug}" target="_blank"
@@ -116,81 +187,130 @@
               class="flex-1 text-center bg-red-50 text-red-600 rounded-lg py-1.5 text-sm font-medium hover:bg-red-100">Delete</button>
           </div>
         </div>
-      `).join('');
-    }
+      `,
+          )
+          .join("");
+      }
 
-    function openCreateModal() {
-      document.getElementById('create-modal').classList.remove('hidden');
-      document.getElementById('new-title').focus();
-    }
-    function closeCreateModal() {
-      document.getElementById('create-modal').classList.add('hidden');
-      document.getElementById('create-error').classList.add('hidden');
-    }
+      function openCreateModal() {
+        document.getElementById("create-modal").classList.remove("hidden");
+        document.getElementById("new-title").focus();
+      }
+      function closeCreateModal() {
+        document.getElementById("create-modal").classList.add("hidden");
+        document.getElementById("create-error").classList.add("hidden");
+      }
 
-    async function createApp() {
-      const title = document.getElementById('new-title').value.trim();
-      const slug  = document.getElementById('new-slug').value.trim().toLowerCase();
-      const desc  = document.getElementById('new-desc').value.trim();
-      const errEl = document.getElementById('create-error');
+      async function createApp() {
+        const title = document.getElementById("new-title").value.trim();
+        const slug = document
+          .getElementById("new-slug")
+          .value.trim()
+          .toLowerCase();
+        const desc = document.getElementById("new-desc").value.trim();
+        const errEl = document.getElementById("create-error");
 
-      if (!title || !slug) { showErr(errEl, 'Title and URL slug are required.'); return; }
-      if (!/^[a-z0-9-]+$/.test(slug)) { showErr(errEl, 'Slug may only contain lowercase letters, numbers, and hyphens.'); return; }
+        if (!title || !slug) {
+          showErr(errEl, "Title and URL slug are required.");
+          return;
+        }
+        if (!/^[a-z0-9-]+$/.test(slug)) {
+          showErr(
+            errEl,
+            "Slug may only contain lowercase letters, numbers, and hyphens.",
+          );
+          return;
+        }
 
-      const res = await fetch('/api/apps', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, slug, description: desc, html_content: defaultHTML(title) })
+        const res = await fetch("/api/apps", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            slug,
+            description: desc,
+            html_content: defaultHTML(title),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showErr(errEl, data.error || "Failed to create app.");
+          return;
+        }
+        closeCreateModal();
+        window.location.href = `/editor/${data.id}`;
+      }
+
+      async function deleteApp(id, title) {
+        if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+        const res = await fetch(`/api/apps/${id}`, { method: "DELETE" });
+        if (res.ok) loadApps();
+        else alert("Failed to delete app.");
+      }
+
+      function copyLink(pyccode, slug) {
+        navigator.clipboard
+          .writeText(`${location.origin}/${pyccode}/${slug}`)
+          .then(() => alert("Link copied!"));
+      }
+
+      function toggleProfile() {
+        document.getElementById("profile-dropdown").classList.toggle("hidden");
+      }
+      document.addEventListener("click", (e) => {
+        const m = document.getElementById("profile-menu");
+        if (m && !m.contains(e.target))
+          document.getElementById("profile-dropdown").classList.add("hidden");
       });
-      const data = await res.json();
-      if (!res.ok) { showErr(errEl, data.error || 'Failed to create app.'); return; }
-      closeCreateModal();
-      window.location.href = `/editor/${data.id}`;
-    }
+      function setProfileUI(me) {
+        const av = me.avatar_url || "";
+        ["nav-avatar", "dd-avatar"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.src = av;
+        });
+        document.getElementById("dd-name").textContent =
+          me.name || me.display_name || me.pyccode;
+        document.getElementById("dd-email").textContent = me.email || "";
+        const t = me.app_count || 0,
+          s = me.shelf_count || 0;
+        document.getElementById("dd-stats").textContent =
+          `${t} app${t !== 1 ? "s" : ""} · ${s} on shelf`;
+      }
 
-    async function deleteApp(id, title) {
-      if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
-      const res = await fetch(`/api/apps/${id}`, { method: 'DELETE' });
-      if (res.ok) loadApps();
-      else alert('Failed to delete app.');
-    }
+      async function logout() {
+        await fetch("/auth/logout", { method: "POST" });
+        location.href = "/";
+      }
 
-    function copyLink(pyccode, slug) {
-      navigator.clipboard.writeText(`${location.origin}/${pyccode}/${slug}`)
-        .then(() => alert('Link copied!'));
-    }
+      function showErr(el, msg) {
+        el.textContent = msg;
+        el.classList.remove("hidden");
+      }
+      function esc(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+      function defaultHTML(title) {
+        return `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8" />\n  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n  <title>${title}</title>\n</head>\n<body>\n  <h1>${title}</h1>\n  <p>Start building your app here!</p>\n</body>\n</html>`;
+      }
 
-    function toggleProfile() {
-      document.getElementById('profile-dropdown').classList.toggle('hidden');
-    }
-    document.addEventListener('click', e => {
-      const m = document.getElementById('profile-menu');
-      if (m && !m.contains(e.target)) document.getElementById('profile-dropdown').classList.add('hidden');
-    });
-    function setProfileUI(me) {
-      const av = me.avatar_url || '';
-      ['nav-avatar', 'dd-avatar'].forEach(id => { const el = document.getElementById(id); if (el) el.src = av; });
-      document.getElementById('dd-name').textContent = me.name || me.display_name || me.pyccode;
-      document.getElementById('dd-email').textContent = me.email || '';
-      const t = me.app_count || 0, s = me.shelf_count || 0;
-      document.getElementById('dd-stats').textContent = `${t} app${t !== 1 ? 's' : ''} · ${s} on shelf`;
-    }
+      function makeNewSlug() {
+        const TITLE = document.getElementById("new-title");
+        const URL_SLUG = document.getElementById("new-slug");
+        URL_SLUG.value = TITLE.value.toLowerCase().replace(/\s+/g, "-");
+      }
 
-    async function logout() {
-      await fetch('/auth/logout', { method: 'POST' });
-      location.href = '/';
-    }
+      document
+        .getElementById("new-slug")
+        .addEventListener("focus", makeNewSlug);
 
-    function showErr(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
-    function esc(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-    function defaultHTML(title) {
-      return `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8" />\n  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n  <title>${title}</title>\n</head>\n<body>\n  <h1>${title}</h1>\n  <p>Start building your app here!</p>\n</body>\n</html>`;
-    }
-
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCreateModal(); });
-    init();
-  </script>
-</body>
+      document.addEventListener("keyup", (e) => {
+        if (e.key === "Escape") closeCreateModal();
+      });
+      init();
+    </script>
+  </body>
 </html>
