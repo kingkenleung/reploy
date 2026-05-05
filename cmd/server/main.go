@@ -86,6 +86,7 @@ func main() {
 	api := r.Group("/api")
 	api.Use(middleware.AuthRequired())
 	{
+		api.GET("/categories", handlers.GetAllCategories(db))
 		api.GET("/apps", handlers.ListApps(db))
 		api.POST("/apps", handlers.CreateApp(db))
 		api.GET("/apps/:id", handlers.GetApp(db))

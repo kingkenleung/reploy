@@ -226,6 +226,23 @@ func (db *DB) DeleteApp(ctx context.Context, id string) error {
 	return err
 }
 
+func (db *DB) GetAllCategories(ctx context.Context) ([]string, error) {
+	rows, err := db.pool.Query(ctx, `SELECT DISTINCT jsonb_array_elements_text(category) AS cat FROM apps WHERE category IS NOT NULL AND category != '[]'::jsonb ORDER BY cat`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var cats []string
+	for rows.Next() {
+		var cat string
+		if err := rows.Scan(&cat); err != nil {
+			return nil, err
+		}
+		cats = append(cats, cat)
+	}
+	return cats, nil
+}
+
 func scanApps(rows interface {
 	Next() bool
 	Scan(...any) error

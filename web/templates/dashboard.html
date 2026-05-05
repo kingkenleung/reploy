@@ -208,16 +208,21 @@
 
       let tsNewCategory = null;
 
-      function openCreateModal() {
+      async function openCreateModal() {
         document.getElementById("create-modal").classList.remove("hidden");
         document.getElementById("new-title").focus();
-        // Init TomSelect for category
+        // Init TomSelect for category with all existing categories
         if (tsNewCategory) tsNewCategory.destroy();
+        let allCats = [];
+        try {
+          allCats = await fetch("/api/categories").then(r => r.json());
+        } catch(e) {}
         tsNewCategory = new TomSelect("#new-category", {
           create: true,
           plugins: ["remove_button"],
           createOnBlur: true,
           persist: false,
+          options: (allCats || []).map(c => ({ value: c, text: c })),
         });
       }
 

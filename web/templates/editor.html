@@ -226,19 +226,28 @@
     });
 
     // --- Info modal ---
-    function openInfoModal() {
+    async function openInfoModal() {
       if (!app) return;
       document.getElementById('info-title').value = app.title || '';
       document.getElementById('info-slug').value = app.slug || '';
+      updateSlugPreview();
       document.getElementById('info-description').value = app.description || '';
       if (tsCategory) tsCategory.destroy();
       const cats = app.category || [];
+      // Fetch all existing categories from API
+      let allCats = [];
+      try {
+        const r = await fetch('/api/categories');
+        if (r.ok) allCats = await r.json();
+      } catch(e) {}
+      // Merge: all global cats as options, current app cats as selected items
+      const allOpts = [...new Set([...allCats, ...cats])].map(c => ({ value: c, text: c }));
       tsCategory = new TomSelect('#info-category', {
         create: true,
         plugins: ['remove_button'],
         createOnBlur: true,
         persist: false,
-        options: cats.map(c => ({ value: c, text: c })),
+        options: allOpts,
         items: cats,
       });
       document.getElementById('info-modal').classList.remove('hidden');

@@ -134,6 +134,20 @@ func UpdateApp(db *storage.DB) gin.HandlerFunc {
 	}
 }
 
+func GetAllCategories(db *storage.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		cats, err := db.GetAllCategories(c.Request.Context())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "無法取得分類列表"})
+			return
+		}
+		if cats == nil {
+			cats = []string{}
+		}
+		c.JSON(http.StatusOK, cats)
+	}
+}
+
 func DeleteApp(db *storage.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.GetString("user_id")
