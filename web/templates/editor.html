@@ -162,6 +162,11 @@
       <label class="block text-xs text-gray-500 mb-1">Title</label>
       <input id="info-title" type="text" maxlength="80"
         class="w-full border rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      <label class="block text-xs text-gray-500 mb-1">URL Slug <span class="text-gray-400">reploy.spyc.hk/&lt;pyccode&gt;/<span id="info-slug-preview" class="text-indigo-500"></span></span></label>
+      <input id="info-slug" type="text" maxlength="60"
+        class="w-full border rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        placeholder="my-cool-app" oninput="updateSlugPreview()" />
+      <p id="info-slug-error" class="text-red-500 text-xs mb-2 hidden"></p>
       <label class="block text-xs text-gray-500 mb-1">Description</label>
       <textarea id="info-description" rows="3" maxlength="300"
         class="w-full border rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
@@ -224,6 +229,7 @@
     function openInfoModal() {
       if (!app) return;
       document.getElementById('info-title').value = app.title || '';
+      document.getElementById('info-slug').value = app.slug || '';
       document.getElementById('info-description').value = app.description || '';
       if (tsCategory) tsCategory.destroy();
       const cats = app.category || [];
@@ -242,24 +248,36 @@
       document.getElementById('info-modal').classList.add('hidden');
     }
 
+    function updateSlugPreview() {
+      const v = document.getElementById('info-slug').value;
+      document.getElementById('info-slug-preview').textContent = v;
+    }
+
     async function saveInfo() {
       const title       = document.getElementById('info-title').value.trim();
+      const slug        = document.getElementById('info-slug').value.trim().toLowerCase();
       const description = document.getElementById('info-description').value.trim();
       const category    = tsCategory.getValue();
+      const slugErrEl   = document.getElementById('info-slug-error');
+      slugErrEl.classList.add('hidden');
       if (!title) return;
+      if (!slug) { slugErrEl.textContent = 'Slug is required.'; slugErrEl.classList.remove('hidden'); return; }
+      if (!/^[a-z0-9-]+$/.test(slug)) { slugErrEl.textContent = 'Slug may only contain lowercase letters, numbers, and hyphens.'; slugErrEl.classList.remove('hidden'); return; }
       const html = editor.getValue();
       if (html.length > 500 * 1024) { setStatus('⚠ File exceeds 500 KB limit'); closeInfoModal(); return; }
       setStatus('Saving…');
       const res = await fetch(`/api/apps/${APP_ID}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, html_content: html, category }),
+        body: JSON.stringify({ title, slug, description, html_content: html, category }),
       });
       if (res.ok) {
         app.title = title;
+        app.slug = slug;
         app.description = description;
         app.category = category;
         document.getElementById('app-title').value = title;
+        updatePreviewLink();
         setStatus('Saved ✓');
         closeInfoModal();
       } else {
