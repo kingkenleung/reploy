@@ -5,17 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Reploy — My Apps</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2/dist/css/tom-select.default.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/tom-select@2/dist/css/tom-select.default.min.css"
+    />
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2/dist/js/tom-select.complete.min.js"></script>
     <style>
-      .ts-wrapper .ts-control { border-radius: .5rem; border-color: #e5e7eb; background: #fff; box-shadow: none; }
-      .ts-wrapper.focus .ts-control { border-color: #d1d5db; box-shadow: 0 0 0 3px rgba(0,0,0,.06); outline: none; }
-      .ts-control .item { background: #f3f4f6; color: #374151; border-color: #e5e7eb; border-radius: 9999px; }
-      .ts-control .item.active { background: #e5e7eb; color: #374151; }
-      .ts-control .item .remove { color: #9ca3af; border-left-color: #e5e7eb; }
-      .ts-control .item .remove:hover { background: transparent; color: #374151; }
-      .ts-dropdown { border-color: #e5e7eb; border-radius: .5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,.07); }
-      .ts-dropdown-content .option.active { background: #f9fafb; color: #111827; }
+      .ts-wrapper .ts-control {
+        border-radius: 0.5rem;
+        border-color: #e5e7eb;
+        background: #fff;
+        box-shadow: none;
+      }
+      .ts-wrapper.focus .ts-control {
+        border-color: #d1d5db;
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+        outline: none;
+      }
+      .ts-control .item {
+        background: #f3f4f6;
+        color: #374151;
+        border-color: #e5e7eb;
+        border-radius: 9999px;
+      }
+      .ts-control .item.active {
+        background: #e5e7eb;
+        color: #374151;
+      }
+      .ts-control .item .remove {
+        color: #9ca3af;
+        border-left-color: #e5e7eb;
+      }
+      .ts-control .item .remove:hover {
+        background: transparent;
+        color: #374151;
+      }
+      .ts-dropdown {
+        border-color: #e5e7eb;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+      }
+      .ts-dropdown-content .option.active {
+        background: #f9fafb;
+        color: #111827;
+      }
     </style>
   </head>
   <body class="bg-gray-50 min-h-screen">
@@ -134,8 +167,16 @@
           placeholder="A short description"
           class="w-full border rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
         />
-        <label class="block text-sm text-gray-600 mb-1">Category <span class="text-gray-400">(optional)</span></label>
-        <div class="mb-4"><select id="new-category" multiple placeholder="Add categories…"></select></div>
+        <label class="block text-sm text-gray-600 mb-1"
+          >Category <span class="text-gray-400">(optional)</span></label
+        >
+        <div class="mb-4">
+          <select
+            id="new-category"
+            multiple
+            placeholder="Add categories…"
+          ></select>
+        </div>
         <p id="create-error" class="text-red-500 text-xs mb-3 hidden"></p>
         <div class="flex gap-3 justify-end">
           <button
@@ -214,22 +255,29 @@
         // Init TomSelect for category with all existing categories
         if (tsNewCategory) tsNewCategory.destroy();
         let allCats = [];
+
         try {
-          allCats = await fetch("/api/categories").then(r => r.json());
-        } catch(e) {}
+          const allCatsRes = await fetch("/api/categories");
+          allCats = await allCatsRes.json();
+        } catch (e) {
+          // silently fall back to empty list
+        }
         tsNewCategory = new TomSelect("#new-category", {
           create: true,
           plugins: ["remove_button"],
           createOnBlur: true,
           persist: false,
-          options: (allCats || []).map(c => ({ value: c, text: c })),
+          options: (allCats || []).map((c) => ({ value: c, text: c })),
         });
       }
 
       function closeCreateModal() {
         document.getElementById("create-modal").classList.add("hidden");
         document.getElementById("create-error").classList.add("hidden");
-        if (tsNewCategory) { tsNewCategory.destroy(); tsNewCategory = null; }
+        if (tsNewCategory) {
+          tsNewCategory.destroy();
+          tsNewCategory = null;
+        }
       }
 
       async function createApp() {
@@ -344,23 +392,6 @@
         if (e.key === "Escape") closeCreateModal();
       });
 
-      let tsCreate = null;
-      function openCreateModal() {
-        document.getElementById("create-modal").classList.remove("hidden");
-        document.getElementById("new-title").focus();
-        if (tsCreate) tsCreate.destroy();
-        tsCreate = new TomSelect("#new-category", {
-          create: true,
-          plugins: ["remove_button"],
-          createOnBlur: true,
-          persist: false,
-        });
-      }
-      function closeCreateModal() {
-        document.getElementById("create-modal").classList.add("hidden");
-        document.getElementById("create-error").classList.add("hidden");
-        if (tsCreate) { tsCreate.destroy(); tsCreate = null; }
-      }
 
       init();
     </script>
